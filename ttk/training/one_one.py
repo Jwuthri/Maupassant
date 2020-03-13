@@ -1,4 +1,3 @@
-import os
 import datetime
 
 import pandas as pd
@@ -23,7 +22,7 @@ def define_path(classifier):
 
 def train(train, test, val, classifier="binary", experiment=None, **kwargs):
     assert classifier in ['binary', 'single', 'multi']
-    model_dir, le_path, tensorboard_dir, checkpoint_path = define_path()
+    model_dir, le_path, tensorboard_dir, checkpoint_path = define_path(classifier)
     if classifier == "binary":
         self = TensorflowClassifier(clf_type="binary", **kwargs)
     elif classifier == "multi":
@@ -97,9 +96,9 @@ def train(train, test, val, classifier="binary", experiment=None, **kwargs):
 
 if __name__ == '__main__':
     expe = Experiment(api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE)
-    test_df = pd.read_csv(os.path.join(DATASET_PATH, 'multi_label_test.csv'))
-    val_df = pd.read_csv(os.path.join(DATASET_PATH, 'multi_label_val.csv'))
-    train_df = pd.read_csv(os.path.join(DATASET_PATH, 'multi_label_train.csv'))
+    test_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'test.csv'))
+    val_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'val.csv'))
+    train_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'train.csv'))
     train(
         train_df, val_df, test_df, experiment=expe, text='feature',
         batch_size=512, buffer_size=1024, epochs=30, classifier='multi'
