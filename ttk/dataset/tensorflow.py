@@ -9,7 +9,7 @@ from ttk.dataset.pandas import remove_rows_contains_null
 
 class TensorflowDataset(LabelEncoding):
 
-    def __init__(self, text, label, multi_label, batch_size, buffer_size):
+    def __init__(self, text, label, multi_label=True, batch_size=512, buffer_size=512):
         super().__init__(multi_label)
         self.text = text
         self.label = label
