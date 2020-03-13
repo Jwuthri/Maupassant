@@ -1,0 +1,11 @@
+# Editors
+.idea/
+
+# Build
+__pycache__
+nlptk/models/*.bin
+.ipynb_checkpoints
+*.csv
+
+venv/
+.spyproject/
