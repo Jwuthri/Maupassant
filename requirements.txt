@@ -29,7 +29,6 @@ gast==0.2.2
 google-auth==1.11.2
 google-auth-oauthlib==0.4.1
 google-pasta==0.1.8
-gprocessing==0.1.0
 graphviz==0.13.2
 grpcio==1.27.2
 h5py==2.10.0
