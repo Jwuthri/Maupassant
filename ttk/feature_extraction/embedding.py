@@ -1,6 +1,6 @@
 import tensorflow_text
 import tensorflow as tf
-from tensorflow_hub import KerasLayer
+import tensorflow_hub as hub
 
 from ttk.utils import timer
 
@@ -21,7 +21,7 @@ class BertEmbedding:
         }
         bert_module = module_mapping[self.model]
 
-        return KerasLayer(bert_module, input_shape=[], dtype=tf.string, trainable=False)
+        return hub.KerasLayer(bert_module, input_shape=[], dtype=tf.string, trainable=False)
 
     @timer
     def fit(self, x):

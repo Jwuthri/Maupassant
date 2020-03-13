@@ -3,10 +3,10 @@ import numpy as np
 import tensorflow_text
 import tensorflow as tf
 
-from nlptk.utils import timer, text_format
-from nlptk.dataset.tensorflow import TensorflowDataset
-from nlptk.training_utils import macro_f1, macro_soft_f1
-from nlptk.feature_extraction.embedding import BertEmbedding
+from ttk.utils import timer, text_format
+from ttk.dataset.tensorflow import TensorflowDataset
+from ttk.training_utils import macro_f1, macro_soft_f1
+from ttk.feature_extraction.embedding import BertEmbedding
 
 
 class TensorflowClassifier(TensorflowDataset):
