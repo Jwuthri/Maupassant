@@ -4,6 +4,7 @@ import datetime
 import pandas as pd
 from comet_ml import Experiment
 
+from ttk.settings import *
 from ttk.utils import mark_format, text_format
 from ttk.settings import MODEL_PATH, DATASET_PATH, LOGS_PATH
 from ttk.suppervised.one_to_one_classifier import TensorflowClassifier
@@ -95,7 +96,7 @@ def train(train, test, val, classifier="binary", experiment=None, **kwargs):
 
 
 if __name__ == '__main__':
-    expe = Experiment(api_key="lLgXgFxE5cJEkeXxzR8Wp0zCU", project_name="nlptk", workspace="jwuthri")
+    expe = Experiment(api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE)
     test_df = pd.read_csv(os.path.join(DATASET_PATH, 'multi_label_test.csv'))
     val_df = pd.read_csv(os.path.join(DATASET_PATH, 'multi_label_val.csv'))
     train_df = pd.read_csv(os.path.join(DATASET_PATH, 'multi_label_train.csv'))
