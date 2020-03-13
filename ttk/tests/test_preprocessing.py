@@ -61,8 +61,3 @@ class TestNormalization:
         text = "I'd like to know yall guys"
         decontraction_text = TextNormalization().text_decontraction(text)
         assert decontraction_text == "I would like to know you all guys"
-
-    def test_text_slice(self):
-        text = "Whereis my mom?"
-        sliced_text = TextNormalization().text_slice(text)
-        assert sliced_text == "Where is my mom ?"

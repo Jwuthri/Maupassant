@@ -12,8 +12,10 @@ class TestTfIdf:
         tfidf.fit(documents=docs)
         data = tfidf.transform(document=docs)
         t_data = np.array(
-            [[0., 0.53404633, 0.53404633, 0.53404633, 0.37997836, 0.], [0.6316672, 0., 0., 0., 0.44943642, 0.6316672]]
+            [[0., 0.70490949, 0.50154891, 0.50154891], [0.70490949, 0., 0.50154891, 0.50154891]]
         )
+        t_data = [[round(x, 3) for x in xx] for xx in t_data]
+        data = [[round(x, 3) for x in xx] for xx in data]
 
         assert data == t_data
 
@@ -22,7 +24,7 @@ class TestTfIdf:
         docs = ['where you from', 'where are you']
         tfidf.fit(documents=docs)
         columns = tfidf.get_features_name
-        t_columns = ['are', 'form', 'where', 'you']
+        t_columns = ['are', 'from', 'where', 'you']
 
         assert columns == t_columns
 
@@ -32,12 +34,14 @@ class TestTfIdf:
         tfidf.fit(documents=docs)
         data = tfidf.transform(document=docs)
         columns = tfidf.get_features_name
+        data = [[round(x, 3) for x in xx] for xx in data]
         df = pd.DataFrame(data)
         df.columns = columns
         t_data = np.array(
-            [[0., 0.53404633, 0.53404633, 0.53404633, 0.37997836, 0.], [0.6316672, 0., 0., 0., 0.44943642, 0.6316672]]
+            [[0., 0.70490949, 0.50154891, 0.50154891], [0.70490949, 0., 0.50154891, 0.50154891]]
         )
-        t_columns = ['are', 'form', 'where', 'you']
+        t_columns = ['are', 'from', 'where', 'you']
+        t_data = [[round(x, 3) for x in xx] for xx in t_data]
         t_df = pd.DataFrame(t_data)
         t_df.columns = t_columns
 
