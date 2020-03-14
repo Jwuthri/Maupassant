@@ -20,7 +20,7 @@ class BertEmbedding:
         }
         bert_module = hub.load(module_mapping[self.model]) if multi_output else module_mapping[self.model]
 
-        return hub.KerasLayer(bert_module, input_shape=[], dtype=tf.string, trainable=False)
+        return hub.KerasLayer(bert_module, input_shape=[], dtype=tf.string, trainable=False, name='bert_embedding')
 
     @timer
     def fit(self, x):

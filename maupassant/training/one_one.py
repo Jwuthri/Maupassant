@@ -15,7 +15,7 @@ def define_path(classifier):
     model_dir = os.path.join(MODEL_PATH, name)
     le_path = os.path.join(MODEL_PATH, f"{name}/label_encoder.pkl")
     tensorboard_dir = os.path.join(LOGS_PATH, f"tensorboard/{name}")
-    checkpoint_path = os.path.join(LOGS_PATH, f"checkpoint/{name}/cp.ckpt")
+    checkpoint_path = os.path.join(LOGS_PATH, f"checkpoint/{name}")
 
     return model_dir, le_path, tensorboard_dir, checkpoint_path
 

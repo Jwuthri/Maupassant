@@ -18,7 +18,7 @@ def define_path(classifier):
     model_dir = os.path.join(MODEL_PATH, name)
     tensorboard_dir = os.path.join(LOGS_PATH, f"tensorboard/{name}")
     plot_file = os.path.join(LOGS_PATH, f"plot/{name}.jpg")
-    checkpoint_path = os.path.join(LOGS_PATH, f"checkpoint/{name}/cp.ckpt")
+    checkpoint_path = os.path.join(LOGS_PATH, f"checkpoint/{name}")
 
     return model_dir, tensorboard_dir, checkpoint_path, plot_file
 
