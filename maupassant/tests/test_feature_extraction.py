@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from ttk.feature_extraction.tfidf import Tfidf
+from maupassant.feature_extraction.tfidf import Tfidf
 
 
 class TestTfIdf:

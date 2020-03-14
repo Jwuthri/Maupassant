@@ -2,7 +2,7 @@ import pickle
 
 from sklearn.preprocessing import MultiLabelBinarizer, LabelEncoder
 
-from ttk.utils import text_format, timer
+from maupassant.utils import text_format, timer
 
 
 class LabelEncoding(object):

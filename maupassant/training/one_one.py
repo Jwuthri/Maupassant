@@ -3,10 +3,10 @@ import datetime
 import pandas as pd
 from comet_ml import Experiment
 
-from ttk.settings import *
-from ttk.utils import mark_format, text_format
-from ttk.settings import MODEL_PATH, DATASET_PATH, LOGS_PATH
-from ttk.suppervised.one_to_one_classifier import TensorflowClassifier
+from maupassant.settings import *
+from maupassant.utils import mark_format, text_format
+from maupassant.settings import MODEL_PATH, DATASET_PATH, LOGS_PATH
+from maupassant.suppervised.one_to_one_classifier import TensorflowClassifier
 
 
 def define_path(classifier):

@@ -3,7 +3,7 @@ import numpy as np
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from ttk.utils import timer
+from maupassant.utils import timer
 
 
 class Tfidf(object):

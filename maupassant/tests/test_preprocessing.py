@@ -1,5 +1,5 @@
-from ttk.preprocessing.tokenization import SentenceTokenization, SequenceTokenization
-from ttk.preprocessing.normalization import TextNormalization
+from maupassant.preprocessing.tokenization import SentenceTokenization, SequenceTokenization
+from maupassant.preprocessing.normalization import TextNormalization
 
 
 class TestTokenization:

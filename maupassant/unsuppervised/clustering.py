@@ -6,7 +6,7 @@ from hdbscan import HDBSCAN
 
 from sklearn.cluster import KMeans, AgglomerativeClustering
 
-from ttk.utils import timer
+from maupassant.utils import timer
 
 
 class Clustering:

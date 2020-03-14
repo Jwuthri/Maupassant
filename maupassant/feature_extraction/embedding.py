@@ -2,7 +2,7 @@ import tensorflow_text
 import tensorflow as tf
 import tensorflow_hub as hub
 
-from ttk.utils import timer
+from maupassant.utils import timer
 
 
 class BertEmbedding:

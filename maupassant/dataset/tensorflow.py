@@ -2,9 +2,9 @@ import ast
 
 import tensorflow as tf
 
-from ttk.utils import timer
-from ttk.dataset.labels import LabelEncoding
-from ttk.dataset.pandas import remove_rows_contains_null
+from maupassant.utils import timer
+from maupassant.dataset.labels import LabelEncoding
+from maupassant.dataset.pandas import remove_rows_contains_null
 
 
 class TensorflowDataset(LabelEncoding):

@@ -4,7 +4,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticD
 from sklearn.decomposition import PCA, TruncatedSVD, SparsePCA
 from umap import UMAP
 
-from ttk.utils import timer
+from maupassant.utils import timer
 
 
 class Decomposition:
