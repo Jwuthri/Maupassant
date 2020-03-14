@@ -33,7 +33,9 @@ class TensorflowClassifier(object):
         dense = tf.keras.layers.Dense(512, activation="relu", name="hidden_layer")(embedding)
         outputs = []
         for k, v in label_data.items():
-            outputs.append(self.set_output_layer(v["classification"], k, len(v['encoder'].classes_))(dense))
+            dense_2 = tf.keras.layers.Dense(512, activation="relu", name=f"hidden_{k}")(dense)
+            layer = self.set_output_layer(v["classification"], k, len(v['encoder'].classes_))(dense_2)
+            outputs.append(layer)
         self.model = tf.keras.models.Model(inputs=input_text, outputs=outputs)
 
     def get_summary(self):

@@ -112,4 +112,4 @@ if __name__ == '__main__':
     labels = {"intent": "multi", "sentiment": "multi"}
     train(
         train_df, val_df, test_df, experiment=expe, text='feature',
-        labels=labels, model_export=None, batch_size=512, epochs=30)
+        labels=labels, model_export=None, batch_size=1024, epochs=30)
