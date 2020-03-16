@@ -23,12 +23,7 @@ def define_path(classifier):
 def train(train, test, val, classifier="binary", experiment=None, **kwargs):
     assert classifier in ['binary', 'single', 'multi']
     model_dir, le_path, tensorboard_dir, checkpoint_path = define_path(classifier)
-    if classifier == "binary":
-        self = TensorflowClassifier(clf_type="binary", **kwargs)
-    elif classifier == "multi":
-        self = TensorflowClassifier(clf_type="mutli", **kwargs)
-    else:
-        self = TensorflowClassifier(clf_type="single", **kwargs)
+    self = TensorflowClassifier(clf_type=classifier, **kwargs)
 
     cleaned_test = self.clean_dataset(test)
     cleaned_val = self.clean_dataset(val)
@@ -75,7 +70,7 @@ def train(train, test, val, classifier="binary", experiment=None, **kwargs):
         print(start_color, "val size", end_format, cleaned_val.shape)
         print(kwargs)
         self.show_classes()
-        history = self.train(train_dataset, val_dataset, epochs=5, callbacks=callbacks)
+        history = self.train(train_dataset, val_dataset, epochs=self.epochs, callbacks=callbacks)
         loss = history.history["loss"]
         val_loss = history.history["val_loss"]
         macro_f1 = history.history["macro_f1"]
@@ -97,8 +92,8 @@ def train(train, test, val, classifier="binary", experiment=None, **kwargs):
 if __name__ == '__main__':
     expe = Experiment(api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE)
     test_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'test.csv'))
-    val_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'val.csv'))
-    train_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'train.csv'))
+    val_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'train.csv'))
+    train_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'val.csv'))
     train(
         train_df, val_df, test_df, experiment=expe, text='feature',
         batch_size=512, buffer_size=1024, epochs=30, classifier='multi'

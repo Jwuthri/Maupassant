@@ -84,7 +84,7 @@ def train(train, test, val, experiment=None, text="", labels={}, model_export=No
         print(start_color, "test size", end_format, test.shape)
         print(start_color, "val size", end_format, val.shape)
         print(kwargs)
-        history = self.train(train_dataset, val_dataset, epochs=5, callbacks=callbacks)
+        history = self.train(train_dataset, val_dataset, epochs=self.epochs, callbacks=callbacks)
         loss = history.history["loss"]
         val_loss = history.history["val_loss"]
         macro_f1 = history.history["macro_f1"]
