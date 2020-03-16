@@ -113,6 +113,7 @@ testpath==0.4.4
 textsearch==0.0.17
 tornado==6.0.4
 traitlets==4.3.3
+umap==0.1.1
 Unidecode==1.1.1
 urllib3==1.25.8
 wcwidth==0.1.8
