@@ -18,3 +18,4 @@ dist/
 # Env
 venv/
 .env
+*/tensorboard/*
