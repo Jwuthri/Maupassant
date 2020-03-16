@@ -14,8 +14,8 @@ dist/
 *.jpg
 *.pkl
 *checkpoint/
+*tensorboard/
 
 # Env
 venv/
 .env
-*/tensorboard/*
