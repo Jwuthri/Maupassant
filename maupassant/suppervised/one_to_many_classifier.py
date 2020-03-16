@@ -30,10 +30,9 @@ class TensorflowClassifier(object):
     def set_model(self, label_data):
         input_text = tf.keras.Input((), dtype=tf.string, name='input_text')
         embedding = BertEmbedding().get_embedding(multi_output=True)(input_text)
-        dense = tf.keras.layers.Dense(512, activation="relu", name="hidden_layer")(embedding)
         outputs = []
         for k, v in label_data.items():
-            dense_2 = tf.keras.layers.Dense(512, activation="relu", name=f"hidden_{k}")(dense)
+            dense_2 = tf.keras.layers.Dense(512, activation="relu", name=f"hidden_{k}")(embedding)
             layer = self.set_output_layer(v["classification"], k, len(v['encoder'].classes_))(dense_2)
             outputs.append(layer)
         self.model = tf.keras.models.Model(inputs=input_text, outputs=outputs)
@@ -46,13 +45,13 @@ class TensorflowClassifier(object):
         for k, v in self.labels.items():
             if v == "binary":
                 loss[k] = "binary_crossentropy"
-                metrics[k] = [macro_f1]
+                metrics[k] = [macro_f1, "accuracy"]
             elif v == "multi":
                 loss[k] = macro_soft_f1
-                metrics[k] = [macro_f1]
+                metrics[k] = [macro_f1, "accuracy"]
             else:
                 loss[k] = "sparse_categorical_crossentropy"
-                metrics[k] = [macro_f1]
+                metrics[k] = [macro_f1, "accuracy"]
         self.model.compile(optimizer='adam', loss=loss, metrics=metrics)
 
     @staticmethod

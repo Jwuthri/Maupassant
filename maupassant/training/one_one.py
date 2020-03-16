@@ -61,6 +61,7 @@ def train(train, test, val, classifier="binary", experiment=None, **kwargs):
             _ = self.train(train_dataset, val_dataset, epochs=self.epochs, callbacks=callbacks)
 
         with experiment.test():
+            breakpoint()
             loss, accuracy = self.model.evaluate(x_test, y_test)
             metrics = {'test_loss': loss, 'test_accuracy': accuracy}
             experiment.log_metrics(metrics)
