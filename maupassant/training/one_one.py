@@ -16,13 +16,14 @@ def define_path(classifier):
     le_path = os.path.join(MODEL_PATH, f"{name}/label_encoder.pkl")
     tensorboard_dir = os.path.join(LOGS_PATH, f"tensorboard/{name}")
     checkpoint_path = os.path.join(LOGS_PATH, f"checkpoint/{name}")
+    plot_file = os.path.join(LOGS_PATH, f"plot/{name}.jpg")
 
-    return model_dir, le_path, tensorboard_dir, checkpoint_path
+    return model_dir, le_path, tensorboard_dir, checkpoint_path, plot_file
 
 
 def train(train, test, val, classifier="binary", experiment=None, **kwargs):
     assert classifier in ['binary', 'single', 'multi']
-    model_dir, le_path, tensorboard_dir, checkpoint_path = define_path(classifier)
+    model_dir, le_path, tensorboard_dir, checkpoint_path, plot_file = define_path(classifier)
     self = TensorflowClassifier(clf_type=classifier, **kwargs)
 
     cleaned_test = self.clean_dataset(test)
@@ -42,6 +43,7 @@ def train(train, test, val, classifier="binary", experiment=None, **kwargs):
 
     self.set_model()
     self.compile_model()
+    self.plot_model(plot_file)
 
     if experiment:
         callbacks = self.callback_func(checkpoint_path=checkpoint_path)
@@ -52,8 +54,9 @@ def train(train, test, val, classifier="binary", experiment=None, **kwargs):
         experiment.log_html("".join([open_mark, "val size", close_mark, str(len(cleaned_val)), "<br><br>"]))
         experiment.log_parameters(kwargs)
         experiment.log_dataset_hash(train)
-        experiment.add_tags(['multi_lang', 'tensorflow', classifier])
+        experiment.add_tags(['multi_lang', 'tensorflow', "1_input_1_output", self.label])
         experiment.log_parameters(dict(enumerate(self.lb.classes_)))
+        experiment.log_image(plot_file)
         with experiment.train():
             _ = self.train(train_dataset, val_dataset, epochs=self.epochs, callbacks=callbacks)
 
@@ -95,6 +98,6 @@ if __name__ == '__main__':
     val_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'train.csv'))
     train_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'val.csv'))
     train(
-        train_df, val_df, test_df, experiment=expe, text='feature',
+        train_df, val_df, test_df, experiment=expe, text='feature', label='label',
         batch_size=512, buffer_size=1024, epochs=30, classifier='multi'
     )

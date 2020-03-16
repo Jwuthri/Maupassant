@@ -95,3 +95,6 @@ class TensorflowClassifier(TensorflowDataset):
     def load_model(self, model_path):
         latest = tf.train.latest_checkpoint(model_path)
         self.model.load_weights(latest)
+
+    def plot_model(self, filename):
+        tf.keras.utils.plot_model(self.model, to_file=filename)
