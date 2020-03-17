@@ -30,10 +30,10 @@ class TensorflowClassifier(object):
     def set_model(self, label_data):
         input_text = tf.keras.Input((), dtype=tf.string, name='input_text')
         embedding = BertEmbedding().get_embedding(multi_output=True)(input_text)
+        dense = tf.keras.layers.Dense(512, activation="selu", name="hidden_layer")(embedding)
         outputs = []
         for k, v in label_data.items():
-            dense_2 = tf.keras.layers.Dense(512, activation="relu", name=f"hidden_{k}")(embedding)
-            layer = self.set_output_layer(v["classification"], k, len(v['encoder'].classes_))(dense_2)
+            layer = self.set_output_layer(v["classification"], k, len(v['encoder'].classes_))(dense)
             outputs.append(layer)
         self.model = tf.keras.models.Model(inputs=input_text, outputs=outputs)
 
