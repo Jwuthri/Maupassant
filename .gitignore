@@ -15,6 +15,7 @@ dist/
 *.pkl
 *checkpoint/
 *tensorboard/
+*models/
 
 # Env
 venv/
