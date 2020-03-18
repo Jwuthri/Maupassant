@@ -1,3 +1,5 @@
+import os
+import pickle
 import numpy as np
 
 import tensorflow_text
@@ -30,9 +32,9 @@ class TensorflowClassifier(object):
     def set_model(self, label_data):
         input_text = tf.keras.Input((), dtype=tf.string, name='input_text')
         embedding = BertEmbedding().get_embedding(multi_output=True)(input_text)
-        dense = tf.keras.layers.Dense(512, activation="selu", name="hidden_layer")(embedding)
         outputs = []
         for k, v in label_data.items():
+            dense = tf.keras.layers.Dense(512, activation="relu")(embedding)
             layer = self.set_output_layer(v["classification"], k, len(v['encoder'].classes_))(dense)
             outputs.append(layer)
         self.model = tf.keras.models.Model(inputs=input_text, outputs=outputs)
@@ -56,7 +58,7 @@ class TensorflowClassifier(object):
 
     @staticmethod
     def callback_func(checkpoint_path, tensorboard_dir=None):
-        checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, verbose=1, period=5)
+        checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, verbose=1, period=1, save_weights_only=False)
         if tensorboard_dir:
             tensorboard = tf.keras.callbacks.TensorBoard(log_dir=tensorboard_dir, histogram_freq=1)
             return [tensorboard, checkpoint]
@@ -88,11 +90,21 @@ class TensorflowClassifier(object):
         f_blue = text_format(txt_color='blue')
         b_black = text_format(txt_color='black', bg_color='green')
         end = text_format(end=True)
-        tf.saved_model.save(self.model, model_path)
+        tf.keras.experimental.export_saved_model(self.model, model_path)
         print(f"{f_blue}Model was exported in this path: {b_black}{model_path}{end}")
 
-    def load_model(self, model_dir):
-        self.model = tf.saved_model.load(model_dir)
+    def load_model(self, model_path):
+        latest = tf.train.latest_checkpoint(model_path)
+        self.model.load_weights(latest)
 
     def plot_model(self, filename):
         tf.keras.utils.plot_model(self.model, to_file=filename)
+
+    @staticmethod
+    def save_lb(model_dir, label_data):
+        for k in label_data.keys():
+            le = label_data[k]['encoder']
+            classification = label_data[k]['classification']
+            id = label_data[k]['id']
+            filename = os.path.join(model_dir, f"{id}_{classification}_{k}_encoder.pkl")
+            pickle.dump(le, open(filename, "wb"))

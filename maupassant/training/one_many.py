@@ -26,7 +26,6 @@ def define_path(classifier):
 def train(train, test, val, experiment=None, text="", labels={}, model_export=None, **kwargs):
     model_dir, tensorboard_dir, checkpoint_path, plot_file = define_path("one_to_many")
     model_dir = model_export if model_export else model_dir
-
     for k, v in labels.items():
         multi_label = True if v == "multi" else False
         td = TensorflowDataset(text=text, label=k, multi_label=multi_label)
@@ -36,6 +35,7 @@ def train(train, test, val, experiment=None, text="", labels={}, model_export=No
 
     input_data = {"train": train[text].values, "val": val[text].values, "test": test[text].values}
     label_data = {}
+    i = 0
     for k, v in labels.items():
         multi_label = True if v == "multi" else False
         le = LabelEncoding(multi_label)
@@ -45,8 +45,10 @@ def train(train, test, val, experiment=None, text="", labels={}, model_export=No
             'val': le.transform_lb(val[k].values),
             'test': le.transform_lb(test[k].values),
             'encoder': le.lb,
-            "classification": v
+            "classification": v,
+            "id": i
         }
+        i += 1
 
     self = TensorflowClassifier(labels, **kwargs)
     self.set_model(label_data)
@@ -91,13 +93,9 @@ def train(train, test, val, experiment=None, text="", labels={}, model_export=No
         val_macro_f1 = history.history["val_macro_f1"]
         metrics = {"loss": loss, "val_loss": val_loss, "macro_f1": macro_f1, "val_macro_f1": val_macro_f1}
         print(metrics)
-    breakpoint()
-    self.export_model(model_dir)
-    for k in label_data.keys():
-        le = label_data[k]['encoder']
-        filename = os.path.join(model_dir, f"{k}_encoder.pkl")
-        pickle.dump(le, open(filename, "wb"))
 
+    self.export_model(model_dir)
+    self.save_lb(model_dir, label_data)
     if experiment:
         experiment.log_asset(model_dir)
         experiment.send_notification('Finished')
@@ -112,4 +110,4 @@ if __name__ == '__main__':
     labels = {"intent": "multi", "sentiment": "multi"}
     train(
         train_df, val_df, test_df, experiment=expe, text='feature',
-        labels=labels, model_export=None, batch_size=1024, epochs=30)
+        labels=labels, model_export=None, batch_size=512, epochs=10)

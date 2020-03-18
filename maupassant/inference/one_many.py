@@ -17,6 +17,7 @@ class Predictor(object):
     @timer
     def __call__(self, x):
         preds = self.model(x)
+        print(preds)
         predictions = []
         for pred in preds:
             size = pred.shape[1]
@@ -43,7 +44,8 @@ class Predictor(object):
 
 
 if __name__ == '__main__':
-    p = Predictor("/home/jwuthri/Documents/GitHub/Maupassant/maupassant/models/one_to_many_2020_03_15_22_36_03")
-    print(p(x=['where is my order?', 'Je veux un remboursement et un return']))
-    print(p(x=['Customer support so bad. Help me with my issue please']))
-    print(p(x=['Je suis pas content']))
+    path = "/home/jwuthri/Documents/GitHub/Maupassant/maupassant/models/one_to_many_2020_03_17_16_34_05"
+    predictor = Predictor(path)
+    print(predictor(x=['where is my order?', 'Je veux un remboursement et un return']))
+    print(predictor(x=['Customer support so bad. Help me with my issue please']))
+    print(predictor(x=['Je suis pas content']))
