@@ -23,19 +23,23 @@ class TensorflowClassifier(TensorflowDataset):
 
     def set_model(self):
         if self.classification_type == "binary":
-            output = tf.keras.layers.Dense(1, activation="sigmoid", name="output")
+            output = tf.keras.layers.Dense(1, activation="sigmoid", name="output_layer")
         elif self.classification_type == "multi":
-            output = tf.keras.layers.Dense(self.nb_classes, activation="sigmoid", name="output")
+            output = tf.keras.layers.Dense(self.nb_classes, activation="sigmoid", name="output_layer")
         else:
-            output = tf.keras.layers.Dense(self.nb_classes, activation="softmax", name="output")
+            output = tf.keras.layers.Dense(self.nb_classes, activation="softmax", name="output_layer")
 
-        self.model = tf.keras.Sequential(
-            [
-                BertEmbedding().get_embedding(),
-                tf.keras.layers.Dense(512, activation="relu", name="hidden_layer"),
-                output,
-            ]
-        )
+        embed_module = BertEmbedding().get_embedding(multi_output=True)
+        input_layer = tf.keras.Input((), dtype=tf.string, name="input_layer")
+        embedding_layer = embed_module(input_layer)
+        reshape_layer = tf.keras.layers.Reshape(target_shape=(1, 512))(embedding_layer)
+        conv_layer = tf.keras.layers.Conv1D(512, 3, padding='same', activation='relu', strides=1)(reshape_layer)
+        gpooling_layer = tf.keras.layers.GlobalMaxPooling1D()(conv_layer)
+        flatten_layer = tf.keras.layers.Flatten()(gpooling_layer)
+        dense_layer = tf.keras.layers.Dense(250, activation="relu")(flatten_layer)
+        dropout_layer = tf.keras.layers.Dropout(0.25)(dense_layer)
+        output_layer = output(dropout_layer)
+        self.model = tf.keras.models.Model(inputs=input_layer, outputs=output_layer)
 
     def get_summary(self):
         print(self.model.summary())

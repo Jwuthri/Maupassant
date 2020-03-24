@@ -61,7 +61,6 @@ def train(train, test, val, classifier="binary", experiment=None, **kwargs):
             _ = self.train(train_dataset, val_dataset, epochs=self.epochs, callbacks=callbacks)
 
         with experiment.test():
-            breakpoint()
             loss, accuracy = self.model.evaluate(x_test, y_test)
             metrics = {'test_loss': loss, 'test_accuracy': accuracy}
             experiment.log_metrics(metrics)
@@ -95,10 +94,10 @@ def train(train, test, val, classifier="binary", experiment=None, **kwargs):
 
 if __name__ == '__main__':
     expe = Experiment(api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE)
-    test_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'test.csv'))
-    val_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'train.csv'))
-    train_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'val.csv'))
+    test_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'test_sentiment.csv'))
+    val_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'val_sentiment.csv'))
+    train_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'train_sentiment.csv'))
     train(
-        train_df, val_df, test_df, experiment=expe, text='feature', label='label',
+        train_df, val_df, test_df, experiment=expe, text='comment_text', label='sentiment',
         batch_size=512, buffer_size=1024, epochs=30, classifier='multi'
     )

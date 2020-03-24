@@ -94,6 +94,7 @@ def train(train, test, val, experiment=None, text="", labels={}, model_export=No
         metrics = {"loss": loss, "val_loss": val_loss, "macro_f1": macro_f1, "val_macro_f1": val_macro_f1}
         print(metrics)
 
+    breakpoint()
     self.export_model(model_dir)
     self.save_lb(model_dir, label_data)
     if experiment:
