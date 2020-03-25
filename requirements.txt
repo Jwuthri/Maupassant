@@ -102,6 +102,7 @@ scikit-learn==0.22.2.post1
 scipy==1.4.1
 Send2Trash==1.5.0
 six==1.14.0
+streamlit
 tensorboard==2.0.1
 tensorflow==2.0.1
 tensorflow-estimator==2.0.1
