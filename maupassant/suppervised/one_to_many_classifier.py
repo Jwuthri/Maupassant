@@ -90,12 +90,11 @@ class TensorflowClassifier(object):
         f_blue = text_format(txt_color='blue')
         b_black = text_format(txt_color='black', bg_color='green')
         end = text_format(end=True)
-        tf.keras.experimental.export_saved_model(self.model, model_path)
+        self.model.save_weights(model_path)
         print(f"{f_blue}Model was exported in this path: {b_black}{model_path}{end}")
 
     def load_model(self, model_path):
-        latest = tf.train.latest_checkpoint(model_path)
-        self.model.load_weights(latest)
+        self.model.load_weights(model_path)
 
     def plot_model(self, filename):
         tf.keras.utils.plot_model(self.model, to_file=filename)

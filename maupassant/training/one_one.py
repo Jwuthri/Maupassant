@@ -9,11 +9,11 @@ from maupassant.settings import MODEL_PATH, DATASET_PATH, LOGS_PATH
 from maupassant.suppervised.one_to_one_classifier import TensorflowClassifier
 
 
-def define_path(classifier):
+def define_path(classifier, label):
     date = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    name = f"{classifier}_{date}"
-    model_dir = os.path.join(MODEL_PATH, name)
-    le_path = os.path.join(MODEL_PATH, f"{name}/label_encoder.pkl")
+    name = f"one_to_one_{date}"
+    model_dir = os.path.join(MODEL_PATH, name, 'model')
+    le_path = os.path.join(MODEL_PATH, f"{name}/0_{classifier}_{label}_encoder.pkl")
     tensorboard_dir = os.path.join(LOGS_PATH, f"tensorboard/{name}")
     checkpoint_path = os.path.join(LOGS_PATH, f"checkpoint/{name}")
     plot_file = os.path.join(LOGS_PATH, f"plot/{name}.jpg")
@@ -21,11 +21,10 @@ def define_path(classifier):
     return model_dir, le_path, tensorboard_dir, checkpoint_path, plot_file
 
 
-def train(train, test, val, classifier="binary", experiment=None, **kwargs):
+def train(train, test, val, classifier="binary", experiment=None, text="text", label='sentiment', **kwargs):
     assert classifier in ['binary', 'single', 'multi']
-    model_dir, le_path, tensorboard_dir, checkpoint_path, plot_file = define_path(classifier)
-    self = TensorflowClassifier(clf_type=classifier, **kwargs)
-
+    model_dir, le_path, tensorboard_dir, checkpoint_path, plot_file = define_path(classifier, label)
+    self = TensorflowClassifier(clf_type=classifier, text=text, label=label, **kwargs)
     cleaned_test = self.clean_dataset(test)
     cleaned_val = self.clean_dataset(val)
     cleaned_train = self.clean_dataset(train)
@@ -60,10 +59,10 @@ def train(train, test, val, classifier="binary", experiment=None, **kwargs):
         with experiment.train():
             _ = self.train(train_dataset, val_dataset, epochs=self.epochs, callbacks=callbacks)
 
-        with experiment.test():
-            loss, accuracy = self.model.evaluate(x_test, y_test)
-            metrics = {'test_loss': loss, 'test_accuracy': accuracy}
-            experiment.log_metrics(metrics)
+        # with experiment.test():
+        #     loss, accuracy = self.model.evaluate(x_test, y_test)
+        #     metrics = {'test_loss': loss, 'test_accuracy': accuracy}
+        #     experiment.log_metrics(metrics)
     else:
         callbacks = self.callback_func(tensorboard_dir=tensorboard_dir, checkpoint_path=checkpoint_path)
         start_color = text_format(txt_color='purple', txt_style='bold')
