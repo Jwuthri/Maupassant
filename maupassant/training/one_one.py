@@ -93,10 +93,10 @@ def train(train, test, val, classifier="binary", experiment=None, text="text", l
 
 if __name__ == '__main__':
     expe = Experiment(api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE)
-    test_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'test_sentiment.csv'))
-    val_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'val_sentiment.csv'))
-    train_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'train_sentiment.csv'))
+    test_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'test_intent.csv'))
+    val_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'val_intent.csv'))
+    train_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'train_intent.csv'))
     train(
-        train_df, val_df, test_df, experiment=expe, text='comment_text', label='sentiment',
+        train_df, val_df, test_df, experiment=expe, text='feature', label='intent',
         batch_size=512, buffer_size=1024, epochs=30, classifier='multi'
     )
