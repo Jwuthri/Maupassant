@@ -1,11 +1,33 @@
 version: "3"
 
 services:
-  maupassant:
+  task:
     env_file: .env
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: app/task/Dockerfile
+    volumes:
+      - .:/maupassant/src
+    restart: always
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: app/streamlit/Dockerfile
+    command: "streamlit run maupassant/stream_app/app.py"
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/maupassant/src
+    restart: always
+
+  notebook:
+    build:
+      context: .
+      dockerfile: app/notebook/Dockerfile
+    command: "jupyter lab --ip=0.0.0.0 --allow-root"
+    ports:
+      - "8888:8888"
     volumes:
       - .:/maupassant/src
     restart: always
