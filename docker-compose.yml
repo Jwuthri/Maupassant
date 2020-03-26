@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  maupassant:
+    env_file: .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/maupassant/src
+    restart: always
