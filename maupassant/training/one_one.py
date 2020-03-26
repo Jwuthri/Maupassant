@@ -59,10 +59,6 @@ def train(train, test, val, classifier="binary", experiment=None, text="text", l
         with experiment.train():
             _ = self.train(train_dataset, val_dataset, epochs=self.epochs, callbacks=callbacks)
 
-        # with experiment.test():
-        #     loss, accuracy = self.model.evaluate(x_test, y_test)
-        #     metrics = {'test_loss': loss, 'test_accuracy': accuracy}
-        #     experiment.log_metrics(metrics)
     else:
         callbacks = self.callback_func(tensorboard_dir=tensorboard_dir, checkpoint_path=checkpoint_path)
         start_color = text_format(txt_color='purple', txt_style='bold')
