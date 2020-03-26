@@ -7,5 +7,6 @@ COPY requirements.txt setup.py ./
 COPY maupassant ./maupassant/
 
 RUN pip install -r requirements.txt
+RUN python -m nltk.downloader punkt
 
 ENV PYTHONPATH "${PYTHONPATH}:/maupassant/src"

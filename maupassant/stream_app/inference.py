@@ -16,8 +16,5 @@ class Inference(object):
     def main(self):
         st.title("Inference")
         text_2_predict = st.text_area("enter text predict")
-        if text_2_predict == "":
-            text_2_predict = "Can you get the fuck off"
-
         prediction = self.prediction.predict_classes(text_2_predict)
         st.markdown(prediction, unsafe_allow_html=True)

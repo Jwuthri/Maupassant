@@ -2,7 +2,11 @@ FROM python:3.7.3
 
 WORKDIR /maupassant/src
 
-RUN pip install streamlit
+COPY requirements.txt setup.py ./
+COPY maupassant ./maupassant/
+
+RUN pip install -r requirements.txt
+RUN python -m nltk.downloader punkt
 
 EXPOSE 8501
 
