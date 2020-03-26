@@ -9,7 +9,7 @@ class Inference(object):
         self.path = path
         self.prediction = self.set_predictor()
 
-    @st.cache
+    @st.cache(allow_output_mutation=True)
     def set_predictor(self):
         return Predictor(self.path)
 
@@ -21,4 +21,3 @@ class Inference(object):
 
         prediction = self.prediction.predict_classes(text_2_predict)
         st.markdown(prediction, unsafe_allow_html=True)
-        st.json(prediction)
