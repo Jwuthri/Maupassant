@@ -1,4 +1,6 @@
 import streamlit as st
 
-x = st.slider('Select a value')
-st.write(x, 'squared is', x * x)
+from maupassant.stream_app.inference import Inference
+
+
+Inference(path="").main()
