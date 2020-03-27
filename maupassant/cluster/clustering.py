@@ -3,7 +3,6 @@ import pickle
 import matplotlib.pyplot as plt
 
 from hdbscan import HDBSCAN
-
 from sklearn.cluster import KMeans, AgglomerativeClustering
 
 from maupassant.utils import timer

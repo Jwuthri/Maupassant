@@ -1,3 +1,5 @@
+import os
+import pickle
 from collections import Counter
 
 import numpy as np
@@ -63,3 +65,56 @@ def learning_curves(history):
     val_macro_f1 = history.history["val_macro_f1"]
 
     return loss, val_loss, macro_f1, val_macro_f1
+
+
+class TrainerHelper(object):
+
+    def __init__(self, type, nb_classes):
+        self.model = tf.keras.Sequential()
+        self.type = type
+        self.nb_classes = nb_classes
+
+    def compile_model(self):
+        if self.type == "binary":
+            self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=[macro_f1, "accuracy"])
+        elif self.type == "multi":
+            self.model.compile(optimizer="adam", loss=macro_soft_f1, metrics=[macro_f1, "accuracy"])
+        else:
+            self.model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=[macro_f1, "accuracy"])
+
+    def get_output_layer(self):
+        if self.type == "binary":
+            output = tf.keras.layers.Dense(1, activation="sigmoid", name="output_layer")
+        elif self.type == "multi":
+            output = tf.keras.layers.Dense(self.nb_classes, activation="sigmoid", name="output_layer")
+        else:
+            output = tf.keras.layers.Dense(self.nb_classes, activation="softmax", name="output_layer")
+
+        return output
+
+    @staticmethod
+    def callback_func(checkpoint_path, tensorboard_dir=None):
+        checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, verbose=1, period=5)
+        if tensorboard_dir:
+            tensorboard = tf.keras.callbacks.TensorBoard(log_dir=tensorboard_dir, histogram_freq=1)
+            return [tensorboard, checkpoint]
+        else:
+            return [checkpoint]
+
+    def get_summary(self):
+        print(self.model.summary())
+
+    def export_model(self, model_path):
+        self.model.save_weights(model_path)
+        print(f"Model was exported in this path: {model_path}")
+
+    def plot_model(self, filename):
+        tf.keras.utils.plot_model(self.model, to_file=filename)
+
+    def export_encoder(self, model_dir, label_data):
+        for k in label_data.keys():
+            le = label_data[k]['encoder']
+            classification = label_data[k]['classification']
+            id = label_data[k]['id']
+            filename = os.path.join(model_dir, f"{id}_{classification}_{k}_encoder.pkl")
+            pickle.dump(le, open(filename, "wb"))
