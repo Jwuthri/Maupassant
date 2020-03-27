@@ -1,6 +1,7 @@
 import streamlit as st
 
-from maupassant.inference.one_one import Predictor
+# from maupassant.inference.one_one import Predictor
+from maupassant.inference.one_many import Predictor
 
 
 class Inference(object):

@@ -6,7 +6,7 @@ import tensorflow_text
 import tensorflow as tf
 
 from maupassant.utils import timer, text_format
-from maupassant.training_utils import macro_f1, macro_soft_f1
+from maupassant.tensorflow_utils import macro_f1, macro_soft_f1
 from maupassant.feature_extraction.embedding import BertEmbedding
 
 

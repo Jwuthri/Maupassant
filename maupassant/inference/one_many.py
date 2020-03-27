@@ -39,16 +39,22 @@ class Predictor(object):
         return output
 
     def set_model(self):
-        input_text = tf.keras.Input((), dtype=tf.string, name='input_text')
-        embedding = BertEmbedding().get_embedding(multi_output=True)(input_text)
-        dense = tf.keras.layers.Dense(512, activation="relu", name="hidden_layer")(embedding)
+        embed_module = BertEmbedding().get_embedding(multi_output=True)
+        input_layer = tf.keras.Input((), dtype=tf.string, name="input_layer")
+        embedding_layer = embed_module(input_layer)
+        reshape_layer = tf.keras.layers.Reshape(target_shape=(1, 512))(embedding_layer)
         outputs = []
         for k, v in self.encoders.items():
             _, classification, label, _ = k.split("_")
-            layer = self.set_output_layer(classification, label, len(v))(dense)
+            conv_layer = tf.keras.layers.Conv1D(512, 3, padding='same', activation='relu', strides=1)(reshape_layer)
+            gpooling_layer = tf.keras.layers.GlobalMaxPooling1D()(conv_layer)
+            flatten_layer = tf.keras.layers.Flatten()(gpooling_layer)
+            dense_layer = tf.keras.layers.Dense(250, activation="relu")(flatten_layer)
+            dropout_layer = tf.keras.layers.Dropout(0.25)(dense_layer)
+            layer = self.set_output_layer(classification, label, len(v))(dropout_layer)
             outputs.append(layer)
 
-        return tf.keras.models.Model(inputs=input_text, outputs=outputs)
+        return tf.keras.models.Model(inputs=input_layer, outputs=outputs)
 
     def set_weights(self, path):
         latest = tf.train.latest_checkpoint(path)
@@ -70,15 +76,16 @@ class Predictor(object):
 
     @timer
     def predict_classes(self, x):
-        probas = self.predict_proba(x)
-        preds = []
-        for proba in probas:
-            size = len(proba[0])
-            for k, v in self.encoders.items():
-                if len(v) == size:
-                    preds.append([(v[label], th) for label, th in enumerate(proba[0]) if th >= 0.5])
+        proba = self.predict_proba(x)
+        preds = list(zip(self.encoders, proba))
+        predictions = []
+        for pred in preds:
+            print(pred)
+            v = self.encoders[pred[0]]
+            res = [(v[label], th) for label, th in enumerate(pred[1][0]) if th >= 0.5]
+            predictions.append(res)
 
-        return preds
+        return predictions
 
     def predict_batch(self, x):
         raise NotImplemented
@@ -87,8 +94,7 @@ class Predictor(object):
 if __name__ == '__main__':
     path = '/home/jwuthri/Documents/GitHub/Maupassant/maupassant/models/one_to_one_2020_03_24_13_04_50'
     predictor = Predictor(path)
-    predictor.predict_proba(['where is my order?'])
-    print(predictor.predict_proba(['where is my order?']))
-    res = predictor.predict_classes(['where is my order?'])
-    print(res)
     print(predictor.predict_classes(['I want a refund']))
+    print(predictor.predict_classes(['aller vous faire foutre']))
+    print(predictor.predict_classes(['I am very angry about your services']))
+    print(predictor.predict_classes(['I am not happy about your services']))

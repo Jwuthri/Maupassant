@@ -1,17 +1,10 @@
 import os
+import json
 import pickle
-from collections import Counter
 
 import numpy as np
 
 import tensorflow as tf
-
-
-def get_class_weights(y):
-    counter = Counter(y)
-    majority = max(counter.values())
-
-    return {cls: round(float(majority) / float(count), 2) for cls, count in counter.items()}
 
 
 @tf.function
@@ -111,10 +104,32 @@ class TrainerHelper(object):
     def plot_model(self, filename):
         tf.keras.utils.plot_model(self.model, to_file=filename)
 
-    def export_encoder(self, model_dir, label_data):
+    @staticmethod
+    def export_encoder(model_dir, label_data):
         for k in label_data.keys():
             le = label_data[k]['encoder']
             classification = label_data[k]['classification']
             id = label_data[k]['id']
             filename = os.path.join(model_dir, f"{id}_{classification}_{k}_encoder.pkl")
             pickle.dump(le, open(filename, "wb"))
+
+    @staticmethod
+    def export_info(info, info_path):
+        with open(info_path, 'w') as outfile:
+            json.dump(info, outfile)
+
+
+class PredictHelper(object):
+
+    def __init__(self, model_path):
+        self.model_path = model_path
+
+    def load_info(self, info_path):
+        with open(info_path) as json_file:
+            info = json.load(json_file)
+
+        return info
+
+    def load_model(self):
+        latest = tf.train.latest_checkpoint(self.model_path)
+        self.model.load_weights(latest)
