@@ -80,9 +80,11 @@ class Predictor(object):
         preds = list(zip(self.encoders, proba))
         predictions = []
         for pred in preds:
-            print(pred)
             v = self.encoders[pred[0]]
-            res = [(v[label], th) for label, th in enumerate(pred[1][0]) if th >= 0.5]
+            try:
+                res = [(v[label], th) for label, th in enumerate(pred[1][0]) if th >= 0.5]
+            except:
+                res = [(v[label], th) for label, th in enumerate(pred[1]) if th >= 0.5]
             predictions.append(res)
 
         return predictions
