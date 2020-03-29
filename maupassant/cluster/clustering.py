@@ -27,7 +27,7 @@ class Clustering:
     @timer
     def fit(self, x, n_clusters=5, **kwargs):
         if self.model_name == "HDBSCAN":
-            self.model = self.model(**kwargs)
+            self.model = self.model(**kwargs).fit(x)
         else:
             self.model = self.model(n_clusters=n_clusters, init='k-means++', **kwargs).fit(x)
 
@@ -57,7 +57,7 @@ class Elbow:
         return max_clusters
 
     @timer
-    def fit(self, x, max_clusters=5):
+    def fit(self, x, max_clusters=20):
         for i in range(max_clusters):
             kmeans = KMeans(n_clusters=i, init='k-means++')
             kmeans.fit(x)
@@ -73,7 +73,7 @@ class Elbow:
         if bool(len(self.wcss)):
             plt.plot(len(self.wcss), self.wcss, 'bx-')
         else:
-            raise Exception("Please run self.tensorboard(x) or provide wcss")
+            raise Exception("Please run self.fit(x) or provide wcss")
         plt.xlabel('Number of clusters')
         plt.ylabel('Distortion')
         plt.title('The Elbow Method showing the optimal n_clusters')
