@@ -5,7 +5,7 @@ import pandas as pd
 from comet_ml import Experiment
 
 from maupassant.settings import *
-from maupassant.one_to_one.models import Model
+from maupassant.classifier.one_to_one.models import Model
 from maupassant.dataset.tensorflow import TensorflowDataset
 
 
