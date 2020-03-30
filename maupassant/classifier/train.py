@@ -5,11 +5,11 @@ import pandas as pd
 from comet_ml import Experiment
 
 from maupassant.settings import *
-from maupassant.classifier.one_to_one.models import Model
+from maupassant.classifier.models import Model
 from maupassant.dataset.tensorflow import TensorflowDataset
 
 
-class Train(TensorflowDataset):
+class TrainClassifier(TensorflowDataset, Model):
 
     def __init__(
             self, train_path, test_path, val_path, feature, label, use_comet=False,

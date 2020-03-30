@@ -1,3 +1,5 @@
+import os
+import glob
 import time
 import functools
 
@@ -47,3 +49,12 @@ def timer(func):
         return value
 
     return wrapper_timer
+
+
+def find_dataset(path):
+    files = glob.glob(os.path.join(path, '*.csv'))
+    train = [file for file in files if "train" in file]
+    val = [file for file in files if "train" in file]
+    test = [file for file in files if "train" in file]
+
+    return train[0], test[0], val[0]
