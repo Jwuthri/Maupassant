@@ -21,7 +21,7 @@ def define_path(classifier, label):
     return model_dir, le_path, tensorboard_dir, checkpoint_path, plot_file
 
 
-def train(train, test, val, classifier="binary", experiment=None, text="text", label='sentiment', **kwargs):
+def train(train, test, val, classifier="binary", experiment=None, text="text", label='sentiment', fine_tune=False, update_model_path=None, **kwargs):
     assert classifier in ['binary', 'single', 'multi']
     model_dir, le_path, tensorboard_dir, checkpoint_path, plot_file = define_path(classifier, label)
     self = TensorflowClassifier(clf_type=classifier, text=text, label=label, **kwargs)
@@ -43,6 +43,13 @@ def train(train, test, val, classifier="binary", experiment=None, text="text", l
     self.set_model()
     self.compile_model()
     self.plot_model(plot_file)
+    if fine_tune:
+        if update_model_path:
+            import tensorflow as tf
+            latest = tf.train.latest_checkpoint(update_model_path)
+            self.model.load_weights(latest)
+        else:
+            raise Exception('Please provide the path of the model to fine_tune using the args => "update_model_path"')
 
     if experiment:
         callbacks = self.callback_func(checkpoint_path=checkpoint_path)
@@ -89,10 +96,10 @@ def train(train, test, val, classifier="binary", experiment=None, text="text", l
 
 if __name__ == '__main__':
     expe = Experiment(api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE)
-    test_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'test_intent.csv'))
-    val_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'val_intent.csv'))
-    train_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'train_intent.csv'))
+    test_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'test_sentiment.csv'))
+    val_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'val_sentiment.csv'))
+    train_df = pd.read_csv(os.path.join(DATASET_PATH, "one_to_one", 'train_sentiment.csv'))
     train(
-        train_df, val_df, test_df, experiment=expe, text='feature', label='intent',
-        batch_size=512, buffer_size=1024, epochs=30, classifier='multi'
+        train_df, val_df, test_df, experiment=expe, text='feature', label='sentiment',
+        batch_size=128, buffer_size=128, epochs=20, classifier='multi', fine_tune=False, update_model_path=None
     )
