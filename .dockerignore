@@ -1,0 +1,8 @@
+.local
+.*cache
+.git
+
+maupassant/data/dataset/*.csv
+maupassant/data/logs/plot/*.csv
+maupassant/data/logs/tensorboard/*.csv
+maupassant/models/*
