@@ -9,7 +9,7 @@ from maupassant.classifier.models import Model
 from maupassant.dataset.tensorflow import TensorflowDataset
 
 
-class TrainClassifier(TensorflowDataset, Model):
+class TrainClassifier(TensorflowDataset):
 
     def __init__(
             self, train_path, test_path, val_path, feature, label, use_comet=False,
@@ -69,7 +69,7 @@ class TrainClassifier(TensorflowDataset, Model):
 
         model_dir, plot_path, info_path, encoder_dir, tensorboard_dir, checkpoint_path = self.define_path()
         self.bm = Model(type=self.classifier, nb_classes=self.nb_classes)
-        self.model = self.bm.set_model(how=self.model_type)
+        self.model = self.bm.__model__(how=self.model_type)
         self.bm.compile_model()
         self.bm.plot_model(plot_path)
 

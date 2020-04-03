@@ -6,7 +6,7 @@ import tensorflow as tf
 from maupassant.utils import timer, text_format
 from maupassant.dataset.tensorflow import TensorflowDataset
 from maupassant.tensorflow_utils import macro_f1, macro_soft_f1
-from maupassant.feature_extraction.embedding import BertEmbedding
+from maupassant.feature_extraction.embedding import Embedding
 
 
 class TensorflowClassifier(TensorflowDataset):
@@ -29,7 +29,7 @@ class TensorflowClassifier(TensorflowDataset):
         else:
             output = tf.keras.layers.Dense(self.nb_classes, activation="softmax", name="output_layer")
 
-        embed_module = BertEmbedding().get_embedding(multi_output=True)
+        embed_module = Embedding().get_embedding(multi_output=True)
         input_layer = tf.keras.Input((), dtype=tf.string, name="input_layer")
         embedding_layer = embed_module(input_layer)
         reshape_layer = tf.keras.layers.Reshape(target_shape=(1, 512))(embedding_layer)
