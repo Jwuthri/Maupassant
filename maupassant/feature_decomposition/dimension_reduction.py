@@ -33,16 +33,16 @@ class Decomposition:
     def fit(self, x, y=None, n_components=0.95):
         if self.model == "LDA":
             self.decomposition = self.decomposition(n_components=n_components)
-            self.decomposition.fit(X=x, y=y)
+            self.decomposition.fit_model(X=x, y=y)
         elif self.model == "UMAP":
             self.decomposition = self.decomposition(n_components=n_components)
-            self.decomposition.fit(X=x, y=y)
+            self.decomposition.fit_model(X=x, y=y)
         elif self.model == "QDA":
             self.decomposition = self.decomposition()
-            self.decomposition.fit(X=x, y=y)
+            self.decomposition.fit_model(X=x, y=y)
         else:
             self.decomposition = self.decomposition(n_components=n_components)
-            self.decomposition.fit(X=x)
+            self.decomposition.fit_model(X=x)
 
     @timer
     def transform(self, x):

@@ -1,10 +1,15 @@
 import os
 import json
+import glob
 import pickle
+import datetime
 
 import numpy as np
 
 import tensorflow as tf
+
+from maupassant.settings import MODEL_PATH, LOGS_PATH
+from maupassant.feature_extraction.embedding import BertEmbedding
 
 
 @tf.function
@@ -60,30 +65,60 @@ def learning_curves(history):
     return loss, val_loss, macro_f1, val_macro_f1
 
 
-class TrainerHelper(object):
+class Model(object):
 
-    def __init__(self, type, nb_classes):
+    def __init__(self, info):
+        self.info = info
         self.model = tf.keras.Sequential()
-        self.type = type
-        self.nb_classes = nb_classes
+
+    def get_output_layer(self):
+        if self.info['label_type'] == "binary":
+            output = tf.keras.layers.Dense(units=1, activation="sigmoid", name="output_layer")
+        elif self.info['label_type'] == "multi":
+            output = tf.keras.layers.Dense(units=self.info['number_labels'], activation="sigmoid", name="output_layer")
+        else:
+            output = tf.keras.layers.Dense(units=self.info['number_labels'], activation="softmax", name="output_layer")
+
+        return output
+
+    def set_model(self, model_type='NN'):
+        embed_module = BertEmbedding().get_embedding()
+        input_layer = tf.keras.Input((), dtype=tf.string, name="input_layer")
+        layer = embed_module(input_layer)
+        layer = tf.keras.layers.Reshape(target_shape=(1, 512))(layer)
+
+        if model_type in ['CNN_NN', 'CNN_GRU_NN']:
+            layer = tf.keras.layers.Conv1D(512, 3, padding='same', activation='relu', strides=1)(layer)
+            if model_type == 'CNN_GRU_NN':
+                layer = tf.keras.layers.Conv1D(256, 3, padding='same', activation='relu', strides=1)(layer)
+                layer = tf.keras.layers.GRU(128, activation='relu')(layer)
+            else:
+                layer = tf.keras.layers.GlobalMaxPooling1D()(layer)
+
+        layer = tf.keras.layers.Flatten()(layer)
+        layer = tf.keras.layers.Dense(128, activation="relu")(layer)
+        layer = tf.keras.layers.Dropout(0.2)(layer)
+        layer = self.get_output_layer()(layer)
+        self.model = tf.keras.models.Model(inputs=input_layer, outputs=layer)
+
+    def fit_model(self, train_dataset, val_dataset, epochs=30, callbacks=[]):
+        return self.model.fit(train_dataset, epochs=epochs, validation_data=val_dataset, callbacks=callbacks)
+
+
+class TrainerHelper(Model):
+
+    def __init__(self, info):
+        self.info = info
+        self.model = tf.keras.Sequential()
+        super().__init__(self.info)
 
     def compile_model(self):
-        if self.type == "binary":
-            self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=[macro_f1, "accuracy"])
-        elif self.type == "multi":
+        if self.info['label_type'] == "binary-label":
+            self.model.compile(optimizer="rmsprop", loss="binary_crossentropy", metrics=[macro_f1, "accuracy"])
+        elif self.info['label_type'] == "multi-label":
             self.model.compile(optimizer="adam", loss=macro_soft_f1, metrics=[macro_f1, "accuracy"])
         else:
             self.model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=[macro_f1, "accuracy"])
-
-    def get_output_layer(self):
-        if self.type == "binary":
-            output = tf.keras.layers.Dense(1, activation="sigmoid", name="output_layer")
-        elif self.type == "multi":
-            output = tf.keras.layers.Dense(self.nb_classes, activation="sigmoid", name="output_layer")
-        else:
-            output = tf.keras.layers.Dense(self.nb_classes, activation="softmax", name="output_layer")
-
-        return output
 
     @staticmethod
     def callback_func(checkpoint_path, tensorboard_dir=None):
@@ -94,15 +129,25 @@ class TrainerHelper(object):
         else:
             return [checkpoint]
 
-    def get_summary(self):
-        print(self.model.summary())
+    @staticmethod
+    def define_training_path(classifier, label):
+        date = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        name = f"{classifier}_{label}_{date}"
+        base_dir = os.path.join(MODEL_PATH, name)
+        model_path = os.path.join(base_dir, 'model')
+        plot_path = os.path.join(base_dir, "model.jpg")
+        info_path = os.path.join(base_dir, "info.json")
+        tensorboard_dir = os.path.join(LOGS_PATH, "tensorboard", name)
+        checkpoint_path = os.path.join(LOGS_PATH, "checkpoint", name)
+
+        return model_path, plot_path, info_path, base_dir, tensorboard_dir, checkpoint_path
+
+    def plot_model(self, filename):
+        tf.keras.utils.plot_model(self.model, to_file=filename)
 
     def export_model(self, model_path):
         self.model.save_weights(model_path)
         print(f"Model was exported in this path: {model_path}")
-
-    def plot_model(self, filename):
-        tf.keras.utils.plot_model(self.model, to_file=filename)
 
     @staticmethod
     def export_encoder(model_dir, label_data):
@@ -119,17 +164,30 @@ class TrainerHelper(object):
             json.dump(info, outfile)
 
 
-class PredictHelper(object):
+class PredictHelper(Model):
 
     def __init__(self, model_path):
         self.model_path = model_path
+        self.info = self.load_info()
+        super().__init__(self.info)
 
-    def load_info(self, info_path):
+    def load_info(self):
+        info_path = os.path.join(self.model_path, "info.json")
         with open(info_path) as json_file:
             info = json.load(json_file)
-
         return info
 
     def load_model(self):
+        self.set_model(model_type=self.info['model_type'])
         latest = tf.train.latest_checkpoint(self.model_path)
         self.model.load_weights(latest)
+
+    def load_encoder(self):
+        encoders_files = glob.glob(self.model_path + "/*encoder.pkl")
+        encoders = {}
+        for file in encoders_files:
+            encoder = pickle.load(open(file, "rb"))
+            encoder_name = os.path.split(file)[1].split('.')[0]
+            encoders[encoder_name] = dict(enumerate(encoder.classes_))
+
+        return encoders

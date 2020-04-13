@@ -46,7 +46,7 @@ class TrainClassifier(TensorflowDataset, Model):
 
         return model_dir, plot_path, info_path, encoder_dir, tensorboard_dir, checkpoint_path
 
-    def fit(self):
+    def fit_model(self):
         test = self.clean_dataset(pd.read_csv(self.test_path, nrows=1000))
         val = self.clean_dataset(pd.read_csv(self.val_path, nrows=1000))
         train = self.clean_dataset(pd.read_csv(self.train_path, nrows=10000))
@@ -69,7 +69,7 @@ class TrainClassifier(TensorflowDataset, Model):
 
         model_dir, plot_path, info_path, encoder_dir, tensorboard_dir, checkpoint_path = self.define_path()
         self.bm = Model(type=self.classifier, nb_classes=self.nb_classes)
-        self.model = self.bm.set_model(how=self.model_type)
+        self.model = self.bm.__model__(how=self.model_type)
         self.bm.compile_model()
         self.bm.plot_model(plot_path)
 
@@ -79,7 +79,7 @@ class TrainClassifier(TensorflowDataset, Model):
             experiment.add_tags(['multi_lang', 'tensorflow', "one_to_one", self.label])
             experiment.log_parameters(dict(enumerate(self.lb.classes_)))
             with experiment.train():
-                _ = self.bm.fit(train_dataset, val_dataset, epochs=self.epochs)
+                _ = self.bm.fit_model(train_dataset, val_dataset, epochs=self.epochs)
         else:
             callbacks = self.callback_func(tensorboard_dir=tensorboard_dir, checkpoint_path=checkpoint_path)
             history = self.train(train_dataset, val_dataset, epochs=self.epochs, callbacks=callbacks)
@@ -110,4 +110,4 @@ if __name__ == '__main__':
     Train(
         train_path, test_path, val_path, "feature", "intent", use_comet=True, model_type='advanced',
         batch_size=512, buffer_size=1024, epochs=2, classifier='multi'
-    ).fit()
+    ).fit_model()

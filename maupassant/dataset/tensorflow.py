@@ -52,3 +52,23 @@ class TensorflowDataset(LabelEncoding):
 
     def split_x_y(self, df):
         return df[self.text].values, df[self.label].values
+
+    def tf_dataset(self, train_df, test_df, val_df):
+        test_df = self.clean_dataset(test_df)
+        val_df = self.clean_dataset(val_df)
+        train_df = self.clean_dataset(train_df)
+
+        x_test, y_test = self.split_x_y(test_df)
+        x_val, y_val = self.split_x_y(val_df)
+        x_train, y_train = self.split_x_y(train_df)
+
+        self.fit_lb(y_train)
+        y_val_encoded = self.transform_lb(y_val)
+        y_test_encoded = self.transform_lb(y_test)
+        y_train_encoded = self.transform_lb(y_train)
+
+        val_dataset = self.to_tensorflow_dataset(x_val, y_val_encoded)
+        train_dataset = self.to_tensorflow_dataset(x_train, y_train_encoded)
+        test_dataset = self.to_tensorflow_dataset(x_test, y_test_encoded)
+
+        return train_dataset, test_dataset, val_dataset

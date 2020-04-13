@@ -27,9 +27,9 @@ class Clustering(object):
     @timer
     def fit(self, x, n_clusters=5, **kwargs):
         if self.model_name == "HDBSCAN":
-            self.model = self.model(**kwargs).fit(x)
+            self.model = self.model(**kwargs).fit_model(x)
         else:
-            self.model = self.model(n_clusters=n_clusters, **kwargs).fit(x)
+            self.model = self.model(n_clusters=n_clusters, **kwargs).fit_model(x)
 
     def predict(self, x):
         if self.model_name == "KMEANS":
@@ -59,7 +59,7 @@ class Elbow(object):
     def fit(self, x, max_clusters=15):
         for i in range(1, max_clusters):
             kmeans = KMeans(n_clusters=i, init='k-means++')
-            kmeans.fit(x)
+            kmeans.fit_model(x)
             self.wcss.append(kmeans.inertia_)
 
         return self.wcss

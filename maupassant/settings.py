@@ -8,6 +8,11 @@ DATA_PATH = os.path.join(ABS_PATH, "data")
 DATASET_PATH = os.path.join(DATA_PATH, "dataset")
 LOGS_PATH = os.path.join(DATA_PATH, "logs")
 
-API_KEY = os.environ['API_KEY']
-PROJECT_NAME = os.environ['PROJECT_NAME']
-WORKSPACE = os.environ['WORKSPACE']
+try:
+    API_KEY = os.environ['API_KEY']
+    PROJECT_NAME = os.environ['PROJECT_NAME']
+    WORKSPACE = os.environ['WORKSPACE']
+except KeyError:
+    API_KEY = None
+    PROJECT_NAME = None
+    WORKSPACE = None

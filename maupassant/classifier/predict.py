@@ -1,15 +1,12 @@
-# def load_encoder(self, model_dir):
-#     encoders_files = glob.glob(model_dir + "/*encoder.pkl")
-#     encoders = {}
-#     for file in encoders_files:
-#         encoder = pickle.load(open(file, "rb"))
-#         encoder_name = os.path.split(file)[1].split('.')[0]
-#         encoders[encoder_name] = dict(enumerate(encoder.classes_))
-#
-#     return encoders
+import tensorflow_text
+import tensorflow as tf
+import tensorflow_hub as hub
+
+from maupassant.feature_extraction.embedding import BertEmbedding
+from maupassant.tensorflow_utils import PredictHelper
 
 
-class PredictClassifier(object):
+class Predictor(PredictHelper):
 
-    def __init__(self):
-        pass
+    def __init__(self, model_path):
+        self.model_path = model_path

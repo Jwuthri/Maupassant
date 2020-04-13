@@ -2,7 +2,7 @@ import click
 
 from maupassant.utils import find_dataset
 from maupassant.classifier.train import TrainClassifier
-from maupassant.classifier.predict import PredictClassifier
+from maupassant.classifier.predict import Predictor
 
 
 @click.command()
@@ -13,6 +13,6 @@ from maupassant.classifier.predict import PredictClassifier
 def run(method, dataset_dir, features, labels):
     """Run a specific task, as training or predicting."""
     if method == "train":
-        trainer = TrainClassifier(dataset_dir, features, labels).fit()
+        trainer = TrainClassifier(dataset_dir, features, labels).fit_model()
     else:
-        predicter = PredictClassifier(dataset_dir)
+        predicter = Predictor(dataset_dir)
