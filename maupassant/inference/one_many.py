@@ -7,7 +7,7 @@ import tensorflow as tf
 import tensorflow_text
 
 from maupassant.utils import timer
-from maupassant.feature_extraction.embedding import BertEmbedding
+from maupassant.feature_extraction.embedding import Embedding
 
 
 class Predictor(object):
@@ -39,7 +39,7 @@ class Predictor(object):
         return output
 
     def set_model(self):
-        embed_module = BertEmbedding().get_embedding(multi_output=True)
+        embed_module = Embedding().get_embedding(multi_output=True)
         input_layer = tf.keras.Input((), dtype=tf.string, name="input_layer")
         embedding_layer = embed_module(input_layer)
         reshape_layer = tf.keras.layers.Reshape(target_shape=(1, 512))(embedding_layer)

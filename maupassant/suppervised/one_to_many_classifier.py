@@ -7,7 +7,7 @@ import tensorflow as tf
 
 from maupassant.utils import timer, text_format
 from maupassant.tensorflow_utils import macro_f1, macro_soft_f1
-from maupassant.feature_extraction.embedding import BertEmbedding
+from maupassant.feature_extraction.embedding import Embedding
 
 
 class TensorflowClassifier(object):
@@ -31,7 +31,7 @@ class TensorflowClassifier(object):
 
     def set_model(self, label_data):
         input_text = tf.keras.Input((), dtype=tf.string, name='input_text')
-        embedding = BertEmbedding().get_embedding(multi_output=True)(input_text)
+        embedding = Embedding().get_embedding(multi_output=True)(input_text)
         outputs = []
         for k, v in label_data.items():
             dense = tf.keras.layers.Dense(512, activation="relu")(embedding)

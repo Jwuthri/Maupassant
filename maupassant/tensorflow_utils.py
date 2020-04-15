@@ -7,9 +7,10 @@ import datetime
 import numpy as np
 
 import tensorflow as tf
+import tensorflow_hub as hub
 
-from maupassant.settings import MODEL_PATH, LOGS_PATH
-from maupassant.feature_extraction.embedding import BertEmbedding
+from maupassant.settings import MODEL_PATH
+from maupassant.feature_extraction.embedding import Embedding
 
 
 @tf.function
@@ -66,30 +67,31 @@ def learning_curves(history):
 
 
 class Model(object):
+    """Setup the model."""
 
     def __init__(self, info):
         self.info = info
         self.model = tf.keras.Sequential()
 
     def get_output_layer(self):
-        if self.info['label_type'] == "binary":
+        if self.info['label_type'] == "binary-label":
             output = tf.keras.layers.Dense(units=1, activation="sigmoid", name="output_layer")
-        elif self.info['label_type'] == "multi":
+        elif self.info['label_type'] == "multi-label":
             output = tf.keras.layers.Dense(units=self.info['number_labels'], activation="sigmoid", name="output_layer")
         else:
             output = tf.keras.layers.Dense(units=self.info['number_labels'], activation="softmax", name="output_layer")
 
         return output
 
-    def set_model(self, model_type='NN'):
-        embed_module = BertEmbedding().get_embedding()
+    def set_model(self, architecture='NN', embedding_type='multilingual'):
+        embed_module = Embedding(model_type=embedding_type)
         input_layer = tf.keras.Input((), dtype=tf.string, name="input_layer")
-        layer = embed_module(input_layer)
+        layer = embed_module.model(input_layer)
         layer = tf.keras.layers.Reshape(target_shape=(1, 512))(layer)
 
-        if model_type in ['CNN_NN', 'CNN_GRU_NN']:
+        if architecture in ['CNN_NN', 'CNN_GRU_NN']:
             layer = tf.keras.layers.Conv1D(512, 3, padding='same', activation='relu', strides=1)(layer)
-            if model_type == 'CNN_GRU_NN':
+            if architecture == 'CNN_GRU_NN':
                 layer = tf.keras.layers.Conv1D(256, 3, padding='same', activation='relu', strides=1)(layer)
                 layer = tf.keras.layers.GRU(128, activation='relu')(layer)
             else:
@@ -101,11 +103,9 @@ class Model(object):
         layer = self.get_output_layer()(layer)
         self.model = tf.keras.models.Model(inputs=input_layer, outputs=layer)
 
-    def fit_model(self, train_dataset, val_dataset, epochs=30, callbacks=[]):
-        return self.model.fit(train_dataset, epochs=epochs, validation_data=val_dataset, callbacks=callbacks)
-
 
 class TrainerHelper(Model):
+    """Tool to train model."""
 
     def __init__(self, info):
         self.info = info
@@ -114,7 +114,7 @@ class TrainerHelper(Model):
 
     def compile_model(self):
         if self.info['label_type'] == "binary-label":
-            self.model.compile(optimizer="rmsprop", loss="binary_crossentropy", metrics=[macro_f1, "accuracy"])
+            self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=[macro_f1, "accuracy"])
         elif self.info['label_type'] == "multi-label":
             self.model.compile(optimizer="adam", loss=macro_soft_f1, metrics=[macro_f1, "accuracy"])
         else:
@@ -129,42 +129,48 @@ class TrainerHelper(Model):
         else:
             return [checkpoint]
 
+    def fit_model(self, train_dataset, val_dataset, epochs=30, callbacks=[]):
+        return self.model.fit(train_dataset, epochs=epochs, validation_data=val_dataset, callbacks=callbacks)
+
     @staticmethod
-    def define_training_path(classifier, label):
+    def define_paths(classifier, label):
         date = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         name = f"{classifier}_{label}_{date}"
         base_dir = os.path.join(MODEL_PATH, name)
-        model_path = os.path.join(base_dir, 'model')
-        plot_path = os.path.join(base_dir, "model.jpg")
-        info_path = os.path.join(base_dir, "info.json")
-        tensorboard_dir = os.path.join(LOGS_PATH, "tensorboard", name)
-        checkpoint_path = os.path.join(LOGS_PATH, "checkpoint", name)
 
-        return model_path, plot_path, info_path, base_dir, tensorboard_dir, checkpoint_path
+        return {
+            "path": base_dir,
+            "model_path": os.path.join(base_dir, 'model'),
+            "model_plot":  os.path.join(base_dir, "model.jpg"),
+            "model_info": os.path.join(base_dir, "model.json"),
+            "metrics_path": os.path.join(base_dir, "metrics.json"),
+            "tensorboard_path": os.path.join(base_dir, "tensorboard"),
+            "checkpoint_path": os.path.join(base_dir, "checkpoint"),
+        }
 
-    def plot_model(self, filename):
-        tf.keras.utils.plot_model(self.model, to_file=filename)
+    def plot_model(self, path):
+        tf.keras.utils.plot_model(self.model, to_file=path)
 
-    def export_model(self, model_path):
-        self.model.save_weights(model_path)
-        print(f"Model was exported in this path: {model_path}")
-
-    @staticmethod
-    def export_encoder(model_dir, label_data):
-        for k in label_data.keys():
-            le = label_data[k]['encoder']
-            classification = label_data[k]['classification']
-            id = label_data[k]['id']
-            filename = os.path.join(model_dir, f"{id}_{classification}_{k}_encoder.pkl")
-            pickle.dump(le, open(filename, "wb"))
+    def export_model(self, path):
+        tf.keras.experimental.export_saved_model(self.model, path)
+        print(f"Model has been exported here => {path}")
 
     @staticmethod
-    def export_info(info, info_path):
-        with open(info_path, 'w') as outfile:
+    def export_encoder(directory, label_data):
+        for k, v in label_data.items():
+            path = os.path.join(directory, f"{v['id']}_{v['classification']}_{k}_encoder.pkl")
+            pickle.dump(v['encoder'], open(path, "wb"))
+            print(f"{k} encoder has been exported here => {path}")
+
+    @staticmethod
+    def export_info(info, path):
+        with open(path, 'w') as outfile:
             json.dump(info, outfile)
+            print(f"Model information have been exported here => {path}")
 
 
 class PredictHelper(Model):
+    """Tool to predict through the model."""
 
     def __init__(self, model_path):
         self.model_path = model_path
@@ -178,13 +184,15 @@ class PredictHelper(Model):
         return info
 
     def load_model(self):
-        self.set_model(model_type=self.info['model_type'])
-        latest = tf.train.latest_checkpoint(self.model_path)
-        self.model.load_weights(latest)
+        self.model = tf.keras.experimental.load_from_saved_model(
+            self.model_path,
+            custom_objects={'KerasLayer': hub.KerasLayer}
+        )
 
     def load_encoder(self):
-        encoders_files = glob.glob(self.model_path + "/*encoder.pkl")
-        encoders = {}
+        path = os.path.join(self.model_path, "*encoder.pkl")
+        encoders_files = sorted(glob.glob(path))
+        encoders = dict()
         for file in encoders_files:
             encoder = pickle.load(open(file, "rb"))
             encoder_name = os.path.split(file)[1].split('.')[0]

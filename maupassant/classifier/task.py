@@ -1,6 +1,5 @@
 import click
 
-from maupassant.utils import find_dataset
 from maupassant.classifier.train import TrainClassifier
 from maupassant.classifier.predict import Predictor
 

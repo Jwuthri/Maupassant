@@ -1,7 +1,7 @@
-import os
-import glob
 import time
 import functools
+
+import numpy as np
 
 
 def text_format(txt_color='white', txt_style='normal', bg_color=None, end=False):
@@ -51,10 +51,15 @@ def timer(func):
     return wrapper_timer
 
 
-def find_dataset(path):
-    files = glob.glob(os.path.join(path, '*.csv'))
-    train = [file for file in files if "train" in file]
-    val = [file for file in files if "train" in file]
-    test = [file for file in files if "train" in file]
+def predict_format(func):
 
-    return train[0], test[0], val[0]
+    @functools.wraps(func)
+    def wrapper(x, *args, **kwargs):
+        if isinstance(x, str):
+            x = np.asarray([x])
+        if isinstance(x, list):
+            x = np.asarray(x)
+
+        return func(x, *args, **kwargs)
+
+    return wrapper
