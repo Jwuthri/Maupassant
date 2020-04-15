@@ -9,9 +9,9 @@ from maupassant.dataset.pandas import remove_rows_contains_null
 
 class TensorflowDataset(LabelEncoding):
 
-    def __init__(self, text, label, multi_label=True, batch_size=512, buffer_size=512):
+    def __init__(self, feature, label, multi_label, batch_size, buffer_size):
         super().__init__(multi_label)
-        self.text = text
+        self.feature = feature
         self.label = label
         self.multi_label = multi_label
         self.buffer_size = buffer_size
@@ -31,7 +31,7 @@ class TensorflowDataset(LabelEncoding):
 
     @timer
     def clean_dataset(self, df):
-        df = remove_rows_contains_null(df, self.text)
+        df = remove_rows_contains_null(df, self.feature)
         df = remove_rows_contains_null(df, self.label)
         if self.multi_label:
             df[self.label] = self.clean_labels(df[self.label].values)
@@ -51,24 +51,24 @@ class TensorflowDataset(LabelEncoding):
         return dataset
 
     def split_x_y(self, df):
-        return df[self.text].values, df[self.label].values
+        return df[self.feature].values, df[self.label].values
 
-    def tf_dataset(self, train_df, test_df, val_df):
+    def main(self, train_df, test_df, val_df):
+        train_df = self.clean_dataset(train_df)
         test_df = self.clean_dataset(test_df)
         val_df = self.clean_dataset(val_df)
-        train_df = self.clean_dataset(train_df)
 
+        x_train, y_train = self.split_x_y(train_df)
         x_test, y_test = self.split_x_y(test_df)
         x_val, y_val = self.split_x_y(val_df)
-        x_train, y_train = self.split_x_y(train_df)
 
         self.fit_lb(y_train)
-        y_val_encoded = self.transform_lb(y_val)
-        y_test_encoded = self.transform_lb(y_test)
         y_train_encoded = self.transform_lb(y_train)
+        y_test_encoded = self.transform_lb(y_test)
+        y_val_encoded = self.transform_lb(y_val)
 
-        val_dataset = self.to_tensorflow_dataset(x_val, y_val_encoded)
         train_dataset = self.to_tensorflow_dataset(x_train, y_train_encoded)
         test_dataset = self.to_tensorflow_dataset(x_test, y_test_encoded)
+        val_dataset = self.to_tensorflow_dataset(x_val, y_val_encoded)
 
         return train_dataset, test_dataset, val_dataset

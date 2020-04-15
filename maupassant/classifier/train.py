@@ -1,113 +1,89 @@
+import os
 import shutil
-import datetime
 
-import pandas as pd
 from comet_ml import Experiment
 
-from maupassant.settings import *
-from maupassant.classifier.models import Model
+from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE
+from maupassant.tensorflow_utils import TrainerHelper
 from maupassant.dataset.tensorflow import TensorflowDataset
 
 
-class TrainClassifier(TensorflowDataset, Model):
+class Trainer(TrainerHelper):
 
     def __init__(
-            self, train_path, test_path, val_path, feature, label, use_comet=False,
-            model_type='intermediate', batch_size=512, buffer_size=1024, epochs=30, classifier='multi'
+            self, train_df, test_df, val_df, label_type, architecture, feature, label,
+            api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE, use_comet=True, epochs=30,
+            multi_label=True, batch_size=512, buffer_size=512, embedding_type="multilingual"
     ):
-        assert classifier in ['binary', 'single', 'multi']
-        assert model_type in ['basic', 'intermediate', 'advanced']
-        multi_label = True if classifier == 'multi' else False
-        super().__init__(feature, label, multi_label, batch_size, buffer_size)
-        self.train_path = train_path
-        self.test_path = test_path
-        self.val_path = val_path
-        self.feature = feature
-        self.label = label
-        self.use_comet = use_comet
-        self.model_type = model_type
-        self.batch_size = batch_size
-        self.buffer_size = buffer_size
         self.epochs = epochs
-        self.classifier = classifier
-        self.experiment = None
-        self.model = None
-        self.bm = None
+        self.API_KEY = api_key
+        self.PROJECT_NAME = project_name
+        self.WORKSPACE = workspace
+        self.use_comet = use_comet
+        self.label = label
+        self.feature = feature
+        self.__dataset__ = TensorflowDataset(feature, label, multi_label, batch_size, buffer_size)
+        self.train_dataset, self.test_dataset, self.val_dataset = self.__dataset__.main(train_df, test_df, val_df)
+        self.label_encoder = {self.label: {"encoder": self.__dataset__.lb, "label_type": self.label_type, "id": 0}}
+        super().__init__(label_type, architecture, self.__dataset__.nb_classes, embedding_type)
 
-    def define_path(self):
-        date = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-        name = f"{self.classifier}_{self.label}_{date}"
-        model_dir = os.path.join(MODEL_PATH, name, 'model')
-        plot_path = os.path.join(MODEL_PATH, name, f"{name}.jpg")
-        info_path = os.path.join(MODEL_PATH, name, "info.json")
-        encoder_dir = os.path.join(MODEL_PATH, name)
-        tensorboard_dir = os.path.join(LOGS_PATH, f"tensorboard/{name}")
-        checkpoint_path = os.path.join(LOGS_PATH, f"checkpoint/{name}")
+    def main(self):
+        self.model = self.set_model()
+        self.compile_model()
+        paths = self.define_paths(self.label_type, self.label)
+        os.mkdir(paths['path'])
+        experiment = None
 
-        return model_dir, plot_path, info_path, encoder_dir, tensorboard_dir, checkpoint_path
-
-    def fit_model(self):
-        test = self.clean_dataset(pd.read_csv(self.test_path, nrows=1000))
-        val = self.clean_dataset(pd.read_csv(self.val_path, nrows=1000))
-        train = self.clean_dataset(pd.read_csv(self.train_path, nrows=10000))
-
-        x_test, y_test = self.split_x_y(test)
-        x_val, y_val = self.split_x_y(val)
-        x_train, y_train = self.split_x_y(train)
-
-        self.fit_lb(y_train)
-        y_val_encoded = self.transform_lb(y_val)
-        y_test_encoded = self.transform_lb(y_test)
-        y_train_encoded = self.transform_lb(y_train)
-
-        val_dataset = self.to_tensorflow_dataset(x_val, y_val_encoded)
-        train_dataset = self.to_tensorflow_dataset(x_train, y_train_encoded)
-        test_dataset = self.to_tensorflow_dataset(x_test, y_test_encoded)
-
-        label_data = {self.label: {"encoder": self.lb, "classification": self.classifier, "id": 0}}
-        info = {self.label: {"model_type": self.model_type, "classification": self.classifier}}
-
-        model_dir, plot_path, info_path, encoder_dir, tensorboard_dir, checkpoint_path = self.define_path()
-        self.bm = Model(type=self.classifier, nb_classes=self.nb_classes)
-        self.model = self.bm.__model__(how=self.model_type)
-        self.bm.compile_model()
-        self.bm.plot_model(plot_path)
-
-        if self.use_comet:
-            experiment = Experiment(api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE)
-            experiment.log_dataset_hash(train)
-            experiment.add_tags(['multi_lang', 'tensorflow', "one_to_one", self.label])
-            experiment.log_parameters(dict(enumerate(self.lb.classes_)))
+        if self.use_comet and self.API_KEY:
+            callbacks = self.callback_func(checkpoint_path=paths['checkpoint_path'])
+            experiment = Experiment(api_key=self.API_KEY, project_name=self.PROJECT_NAME, workspace=self.WORKSPACE)
+            experiment.log_dataset_hash(self.train_dataset)
+            experiment.add_tags(['tensorflow', self.label, self.architecture, self.embedding_type])
+            experiment.log_parameters(dict(enumerate(self.__dataset__.lb.classes_)))
             with experiment.train():
-                _ = self.bm.fit_model(train_dataset, val_dataset, epochs=self.epochs)
+                history = self.fit_model(self.train_dataset, self.val_dataset, epochs=self.epochs, callbacks=callbacks)
+        elif self.use_comet:
+            raise Exception("Please provide an api_key, project_name and workspace for comet_ml")
         else:
-            callbacks = self.callback_func(tensorboard_dir=tensorboard_dir, checkpoint_path=checkpoint_path)
-            history = self.train(train_dataset, val_dataset, epochs=self.epochs, callbacks=callbacks)
-            loss = history.history["loss"]
-            val_loss = history.history["val_loss"]
-            macro_f1 = history.history["macro_f1"]
-            val_macro_f1 = history.history["val_macro_f1"]
-            metrics = {"loss": loss, "val_loss": val_loss, "macro_f1": macro_f1, "val_macro_f1": val_macro_f1}
-            print(metrics)
+            callbacks = self.callback_func(
+                tensorboard_dir=paths['tensorboard_path'], checkpoint_path=paths['checkpoint_path']
+            )
+            history = self.fit_model(self.train_dataset, self.val_dataset, epochs=self.epochs, callbacks=callbacks)
 
-        self.bm.export_model(model_dir)
-        self.bm.export_encoder(encoder_dir, label_data)
-        self.bm.export_info(info, info_path)
-        zip_model = shutil.make_archive(encoder_dir, "zip", os.path.dirname(encoder_dir), os.path.basename(encoder_dir))
-        print(zip_model)
+        loss = history.history["loss"]
+        val_loss = history.history["val_loss"]
+        macro_f1 = history.history["macro_f1"]
+        val_macro_f1 = history.history["val_macro_f1"]
+        metrics = {"loss": loss, "val_loss": val_loss, "macro_f1": macro_f1, "val_macro_f1": val_macro_f1}
+
+        self.export_model(paths['model_path'], self.model)
+        self.export_encoder(paths['path'], self.label_encoder)
+        self.export_model_plot(paths['model_plot'], self.model)
+        self.export_info(paths["model_info"], self.info)
+        self.export_metrics(paths["metrics_path"], metrics)
+        zip_model = shutil.make_archive(
+            paths['path'], "zip", os.path.dirname(paths['path']), os.path.basename(paths['path'])
+        )
 
         if self.use_comet:
-            experiment.log_image(plot_path)
+            experiment.log_image(paths['model_plot'])
             experiment.log_asset(zip_model)
-            experiment.send_notification('Finished')
             experiment.end()
+
+        return zip_model
 
 
 if __name__ == '__main__':
-    train_path = os.path.join(DATASET_PATH, "intent_data_multi_label_train.csv")
-    val_path = os.path.join(DATASET_PATH, "intent_data_multi_label_val.csv")
-    test_path = os.path.join(DATASET_PATH, "intent_data_multi_label_test.csv")
-    Train(
-        train_path, test_path, val_path, "feature", "intent", use_comet=True, model_type='advanced',
-        batch_size=512, buffer_size=1024, epochs=2, classifier='multi'
-    ).fit_model()
+    import pandas as pd
+    from maupassant.settings import DATASET_PATH
+
+    train_path = os.path.join(DATASET_PATH, "intent_data_train_intent.csv")
+    val_path = os.path.join(DATASET_PATH, "intent_data_val_intent.csv")
+    test_path = os.path.join(DATASET_PATH, "intent_data_test_intent.csv")
+
+    train_df = pd.read_csv(train_path)
+    test_df = pd.read_csv(test_path)
+    val_df = pd.read_csv(val_path)
+
+    train = Trainer(train_df, test_df, val_df, "multi-label", "CNN_GRU_NN", "feature", "intent")
+    model_path = train.main()

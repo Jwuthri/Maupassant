@@ -1,6 +1,6 @@
 import click
 
-from maupassant.classifier.train import TrainClassifier
+from maupassant.classifier.train1 import TrainClassifier
 from maupassant.classifier.predict import Predictor
 
 
@@ -14,4 +14,4 @@ def run(method, dataset_dir, features, labels):
     if method == "train":
         trainer = TrainClassifier(dataset_dir, features, labels).fit_model()
     else:
-        predicter = Predictor(dataset_dir)
+        predictor = Predictor(dataset_dir)

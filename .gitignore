@@ -16,6 +16,7 @@ dist/
 *checkpoint/
 *tensorboard/
 *models/
+notebooks/*
 
 # Env
 venv/

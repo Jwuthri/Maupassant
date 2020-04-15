@@ -28,7 +28,7 @@ def train(train, test, val, experiment=None, text="", labels={}, model_export=No
     model_dir = model_export if model_export else model_dir
     for k, v in labels.items():
         multi_label = True if v == "multi" else False
-        td = TensorflowDataset(text=text, label=k, multi_label=multi_label)
+        td = TensorflowDataset(feature=text, label=k, multi_label=multi_label)
         test = td.clean_dataset(test)
         val = td.clean_dataset(val)
         train = td.clean_dataset(train)

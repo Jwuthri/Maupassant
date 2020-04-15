@@ -24,7 +24,7 @@ def define_path(classifier, label):
 def train(train, test, val, classifier="binary", experiment=None, text="text", label='sentiment', fine_tune=False, update_model_path=None, **kwargs):
     assert classifier in ['binary', 'single', 'multi']
     model_dir, le_path, tensorboard_dir, checkpoint_path, plot_file = define_path(classifier, label)
-    self = TensorflowClassifier(clf_type=classifier, text=text, label=label, **kwargs)
+    self = TensorflowClassifier(clf_type=classifier, feature=text, label=label, **kwargs)
     cleaned_test = self.clean_dataset(test)
     cleaned_val = self.clean_dataset(val)
     cleaned_train = self.clean_dataset(train)

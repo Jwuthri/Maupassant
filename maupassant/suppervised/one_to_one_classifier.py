@@ -11,10 +11,10 @@ from maupassant.feature_extraction.embedding import Embedding
 
 class TensorflowClassifier(TensorflowDataset):
 
-    def __init__(self, text='text', label='label', clf_type="mutli", batch_size=512, buffer_size=1024, epochs=30):
-        super().__init__(text, label, True, batch_size, buffer_size)
+    def __init__(self, feature='text', label='label', clf_type="mutli", batch_size=512, buffer_size=1024, epochs=30):
+        super().__init__(feature, label, True, batch_size, buffer_size)
         self.classification_type = clf_type
-        self.text = text
+        self.text = feature
         self.label = label
         self.batch_size = batch_size
         self.buffer_size = buffer_size

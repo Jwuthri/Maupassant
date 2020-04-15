@@ -9,6 +9,8 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_hub as hub
 
+from maupassant.utils import timer
+from maupassant.utils import predict_format
 from maupassant.settings import MODEL_PATH
 from maupassant.feature_extraction.embedding import Embedding
 
@@ -69,29 +71,36 @@ def learning_curves(history):
 class Model(object):
     """Setup the model."""
 
-    def __init__(self, info):
-        self.info = info
+    def __init__(self, label_type, architecture, number_labels, embedding_type):
+        self.label_type = label_type
+        self.architecture = architecture
+        self.number_labels = number_labels
+        self.embedding_type = embedding_type
         self.model = tf.keras.Sequential()
+        self.info = {
+            "label_type": self.label_type, "architecture": self.architecture,
+            "number_labels": self.number_labels, "embedding_type": self.embedding_type
+        }
 
     def get_output_layer(self):
-        if self.info['label_type'] == "binary-label":
+        if self.label_type == "binary-label":
             output = tf.keras.layers.Dense(units=1, activation="sigmoid", name="output_layer")
-        elif self.info['label_type'] == "multi-label":
-            output = tf.keras.layers.Dense(units=self.info['number_labels'], activation="sigmoid", name="output_layer")
+        elif self.label_type == "multi-label":
+            output = tf.keras.layers.Dense(units=self.number_labels, activation="sigmoid", name="output_layer")
         else:
-            output = tf.keras.layers.Dense(units=self.info['number_labels'], activation="softmax", name="output_layer")
+            output = tf.keras.layers.Dense(units=self.number_labels, activation="softmax", name="output_layer")
 
         return output
 
-    def set_model(self, architecture='NN', embedding_type='multilingual'):
-        embed_module = Embedding(model_type=embedding_type)
+    def set_model(self):
+        embed_module = Embedding(model_type=self.embedding_type)
         input_layer = tf.keras.Input((), dtype=tf.string, name="input_layer")
         layer = embed_module.model(input_layer)
         layer = tf.keras.layers.Reshape(target_shape=(1, 512))(layer)
 
-        if architecture in ['CNN_NN', 'CNN_GRU_NN']:
+        if self.architecture in ['CNN_NN', 'CNN_GRU_NN']:
             layer = tf.keras.layers.Conv1D(512, 3, padding='same', activation='relu', strides=1)(layer)
-            if architecture == 'CNN_GRU_NN':
+            if self.architecture == 'CNN_GRU_NN':
                 layer = tf.keras.layers.Conv1D(256, 3, padding='same', activation='relu', strides=1)(layer)
                 layer = tf.keras.layers.GRU(128, activation='relu')(layer)
             else:
@@ -107,10 +116,9 @@ class Model(object):
 class TrainerHelper(Model):
     """Tool to train model."""
 
-    def __init__(self, info):
-        self.info = info
+    def __init__(self, label_type, architecture, number_labels, embedding_type):
         self.model = tf.keras.Sequential()
-        super().__init__(self.info)
+        super().__init__(label_type, architecture, number_labels, embedding_type)
 
     def compile_model(self):
         if self.info['label_type'] == "binary-label":
@@ -129,6 +137,7 @@ class TrainerHelper(Model):
         else:
             return [checkpoint]
 
+    @timer
     def fit_model(self, train_dataset, val_dataset, epochs=30, callbacks=[]):
         return self.model.fit(train_dataset, epochs=epochs, validation_data=val_dataset, callbacks=callbacks)
 
@@ -148,43 +157,53 @@ class TrainerHelper(Model):
             "checkpoint_path": os.path.join(base_dir, "checkpoint"),
         }
 
-    def plot_model(self, path):
-        tf.keras.utils.plot_model(self.model, to_file=path)
+    @staticmethod
+    def export_model_plot(path, model):
+        tf.keras.utils.plot_model(model, to_file=path)
 
-    def export_model(self, path):
-        tf.keras.experimental.export_saved_model(self.model, path)
+    @staticmethod
+    def export_model(path, model):
+        tf.keras.experimental.export_saved_model(model, path)
         print(f"Model has been exported here => {path}")
 
     @staticmethod
     def export_encoder(directory, label_data):
         for k, v in label_data.items():
-            path = os.path.join(directory, f"{v['id']}_{v['classification']}_{k}_encoder.pkl")
+            path = os.path.join(directory, f"{v['id']}_{v['label_type']}_{k}_encoder.pkl")
             pickle.dump(v['encoder'], open(path, "wb"))
             print(f"{k} encoder has been exported here => {path}")
 
     @staticmethod
-    def export_info(info, path):
+    def export_info(path, info):
         with open(path, 'w') as outfile:
             json.dump(info, outfile)
             print(f"Model information have been exported here => {path}")
 
+    @staticmethod
+    def export_metrics(path, metrics):
+        with open(path, 'w') as outfile:
+            json.dump(metrics, outfile)
+            print(f"Model metrics have been exported here => {path}")
 
-class PredictHelper(Model):
+
+class PredictHelper(object):
     """Tool to predict through the model."""
 
     def __init__(self, model_path):
         self.model_path = model_path
         self.info = self.load_info()
-        super().__init__(self.info)
+        self.encoders = self.load_encoder()
+        self.model = self.load_model()
 
     def load_info(self):
         info_path = os.path.join(self.model_path, "info.json")
         with open(info_path) as json_file:
             info = json.load(json_file)
+
         return info
 
     def load_model(self):
-        self.model = tf.keras.experimental.load_from_saved_model(
+        return tf.keras.experimental.load_from_saved_model(
             self.model_path,
             custom_objects={'KerasLayer': hub.KerasLayer}
         )
@@ -199,3 +218,33 @@ class PredictHelper(Model):
             encoders[encoder_name] = dict(enumerate(encoder.classes_))
 
         return encoders
+
+    @predict_format
+    def predict_probabilities(self, x):
+        return self.model.predict(x)
+
+    def predict_classes(self, prediction):
+        classes = self.encoders[prediction[0]]
+        results = [
+            [(classes[label], float(th)) for label, th in enumerate(pred)]
+            for pred in prediction[1]
+        ]
+
+        return [dict(result) for result in results][0]
+
+    @timer
+    def predict_one(self, x):
+        probabilities = self.predict_probabilities(x)
+        predictions = list(zip(self.encoders, probabilities))
+
+        return [self.predict_classes(prediction) for prediction in predictions]
+
+    @timer
+    def predict_batch(self, x):
+        probabilities = self.predict_probabilities(x)
+        results = []
+        for probability in probabilities:
+            predictions = list(zip(self.encoders, probability))
+            results.append([self.predict_classes(prediction) for prediction in predictions])
+
+        return results
