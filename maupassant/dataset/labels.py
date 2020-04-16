@@ -22,7 +22,7 @@ class LabelEncoding(object):
 
     @timer
     def fit_lb(self, y):
-        self.lb.fit_model(y)
+        self.lb.fit(y)
         self.classes_mapping = dict(enumerate(self.lb.classes_))
         self.nb_classes = len(self.lb.classes_)
 

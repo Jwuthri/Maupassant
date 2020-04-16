@@ -18,7 +18,7 @@ class Embedding(object):
             "multilingual-qa": "https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/3",
             "english": "https://tfhub.dev/google/universal-sentence-encoder/4"
         }
-        bert_module = hub.load(module_mapping[self.model_type])
+        bert_module = module_mapping[self.model_type]
 
         return hub.KerasLayer(bert_module, input_shape=[], dtype=tf.string, trainable=False, name="KerasLayer")
 
