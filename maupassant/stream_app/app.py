@@ -28,7 +28,8 @@ def main():
         model_mapping = {}
         for model in models:
             name = os.path.basename(model)
-            model_mapping[name] = model
+            if ".zip" not in name:
+                model_mapping[name] = model
 
         model = st.selectbox("Model", [k for k in model_mapping.keys()])
         if model != "":
