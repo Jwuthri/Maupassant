@@ -1,3 +1,4 @@
+import os
 import click
 
 import pandas as pd
@@ -29,7 +30,8 @@ def train(train_path, test_path, val_path, feature, label, architecture, label_t
 @click.argument("model_path", type=click.Path(exists=True))
 @click.argument("example", type=str)
 def predict(model_path, example):
-    predictor = Predictor(model_path)
+    path = os.path.join(model_path, "model")
+    predictor = Predictor(path)
     pred = predictor.predict_one(example)
     print(pred)
 

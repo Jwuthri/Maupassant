@@ -3,8 +3,8 @@ import glob
 
 import streamlit as st
 
-from maupassant.stream_app.inference import Inference
 from maupassant.settings import MODEL_PATH
+from maupassant.stream_app.try_model import TryModel
 
 
 def main():
@@ -21,11 +21,6 @@ def main():
     )
     if app_mode == "INDEX":
         st.subheader("Maupassant demo site!")
-        st.write(
-            "In this website, you can try a certain number of our apps in development.  "
-            "Select the application you want to try on the drop-down on your left (click on index)  "
-            "Have fun!"
-        )
     elif app_mode == "SHOW_CODE":
         st.code(code)
     elif app_mode == "TRY_MODEL":
@@ -37,7 +32,7 @@ def main():
 
         model = st.selectbox("Model", [k for k in model_mapping.keys()])
         if model != "":
-            Inference(path=model_mapping[model]).main()
+            TryModel(path=model_mapping[model]).predict()
 
 
 if __name__ == '__main__':

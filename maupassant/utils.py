@@ -38,14 +38,14 @@ def timer(func):
         start_time = time.perf_counter()
         value = func(*args, **kwargs)
         run_time = time.perf_counter() - start_time
-        bg_fb = text_format(txt_color='white', bg_color='green', txt_style='bold')
+        bg_fw = text_format(txt_color='white', bg_color='green', txt_style='bold')
         fc = text_format(txt_color='cyan', txt_style='bold')
         fb = text_format(txt_color='blue', txt_style='bold')
         end = text_format(end=True)
 
-        print(f"{bg_fb}Function:{end}{fc}{func.__name__}{end}")
-        print(f"{bg_fb}kwargs:{end}{fb}{kwargs}{end}")
-        print(f"{bg_fb}Duration:{end}{fb}{run_time*1000:.3f}ms{end}")
+        print(f"{bg_fw}Function:{end}{fc}{func.__name__}{end}")
+        print(f"{bg_fw}kwargs:{end}{fb}{kwargs}{end}")
+        print(f"{bg_fw}Duration:{end}{fb}{run_time*1000:.3f}ms{end}")
         return value
 
     return wrapper_timer
@@ -54,12 +54,12 @@ def timer(func):
 def predict_format(func):
 
     @functools.wraps(func)
-    def wrapper(x, *args, **kwargs):
-        if isinstance(x, str):
-            x = np.asarray([x])
-        if isinstance(x, list):
-            x = np.asarray(x)
+    def wrapper(*args, **kwargs):
+        if isinstance(kwargs['x'], str):
+            kwargs['x'] = np.asarray([kwargs['x']])
+        if isinstance(kwargs['x'], list):
+            kwargs['x'] = np.asarray(kwargs['x'])
 
-        return func(x, *args, **kwargs)
+        return func(*args, **kwargs)
 
     return wrapper
