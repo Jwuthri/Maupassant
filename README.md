@@ -103,9 +103,36 @@ Modeling
 ```
 
 ```python
-from maupassant.classifier import task
+import os
 
-task.train(train_path, test_path, val_path, feature, label, architecture, label_type)
+import pandas as pd
+
+from maupassant.classifier.train import Trainer
+from maupassant.settings import DATASET_PATH
+
+
+train_path = os.path.join(DATASET_PATH, "sentiment_train.csv")
+test_path = os.path.join(DATASET_PATH, "sentiment_test.csv")
+val_path = os.path.join(DATASET_PATH, "sentiment_val.csv")
+train_df = pd.read_csv(train_path)
+test_df = pd.read_csv(test_path)
+val_df = pd.read_csv(val_path)
+
+# To train binary model which predict only 1 classe over 2, here the example predict positive/negative
+train = Trainer(train_df, test_df, val_df, "binary-label", "CNN_NN", "feature", "binary", epochs=5, multi_label=False)
+model_path = train.main()
+# results = ["Ok": "positive", "I don't like this": "negative", "I like it": "positive", "Fuck you": "negative"]
+
+# To train model which can predict 1 classe over (n), here the example predict insult/negative/neutral/obscene/offensive/positive/toxic
+train = Trainer(train_df, test_df, val_df, "single-label", "CNN_NN", "feature", "single", epochs=5, multi_label=False)
+model_path = train.main()
+# results = ["Ok": "neutral", "I don't like this": "negative", "I like it": "positive", "Fuck you": "insult"]
+
+# To train multi-label model which can predict (n) classes over (n), here the example insult/negative/neutral/obscene/offensive/positive/toxic
+train = Trainer(train_df, test_df, val_df, "multi-label", "CNN_GRU_NN", "feature", "multi", epochs=5, multi_label=False)
+model_path = train.main()
+# results = ["Ok": "neutral", "I don't like this": "negative", "I like it": "positive", "Fuck you": ("negative", "toxic", "insult")]
+
 ```
 ###### Text Extraction
 ```
