@@ -128,7 +128,7 @@ model_path = train.main()
 # results = ["Ok": "neutral", "I don't like this": "negative", "I like it": "positive", "Fuck you": "insult"]
 
 # To train multi-label model which can predict (n) classes over (n), here the example insult/negative/neutral/obscene/offensive/positive/toxic
-train = Trainer(train_df, test_df, val_df, "multi-label", "CNN_GRU_NN", "feature", "multi", epochs=5, multi_label=False)
+train = Trainer(train_df, test_df, val_df, "multi-label", "CNN_GRU_NN", "feature", "multi", epochs=5, multi_label=True)
 model_path = train.main()
 # results = ["Ok": "neutral", "I don't like this": "negative", "I like it": "positive", "Fuck you": ("negative", "toxic", "insult")]
 
