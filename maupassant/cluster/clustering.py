@@ -59,7 +59,7 @@ class Elbow(object):
     def fit(self, x, max_clusters=15):
         for i in range(1, max_clusters):
             kmeans = KMeans(n_clusters=i, init='k-means++')
-            kmeans.fit_model(x)
+            kmeans.fit(x)
             self.wcss.append(kmeans.inertia_)
 
         return self.wcss
