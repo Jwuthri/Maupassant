@@ -53,12 +53,72 @@ Processing
 * Remove Emoticons
 * Remove text contraction
 ```
+
+```python
+from maupassant.preprocessing.normalization import TextNormalization
+
+tn = TextNormalization()
+
+# text correction
+text = 'Let me tell you somthing you alrady know.'
+cleaned_text = tn.text_correction(text)
+cleaned_text
+>> 'Let me tell you something you already know.'
+
+# Remove emoji/emot
+text = 'Let me tell you something you already know 👍'
+demojize_text = tn.text_demojis(text, how_replace="")
+demojize_text
+>> 'Let me tell you something you already know'
+
+text = 'Let me tell you something you already know :)'
+demoticons_text = tn.text_demoticons(text, how_replace="")
+demoticons_text
+>> 'Let me tell you something you already know '
+
+# Decontract words
+text = "I'd like to know yall guys"
+decontraction_text = tn.text_decontraction(text)
+decontraction_text
+>> 'I would like to know you all guys'
+
+# example of sentence cleaning:
+text = "I'd like to tell you somthing you alrady know."
+decontraction_text = tn.text_decontraction(text)
+cleaned_text = tn.text_correction(decontraction_text)
+cleaned_text
+>> 'I would like to tell you something you already know.'
+```
+
 ###### Tokenization
 ```
 * Sentence Tokenization
 * Sentence DeTokenization
 * Sequence Tokenization
 * Sequence DeTokenization
+```
+
+```python
+from maupassant.preprocessing.tokenization import SentenceTokenization, SequenceTokenization
+
+
+sentence = "Let me tell you something you already know."
+tokens = SentenceTokenization().tokenize(sentence)
+tokens
+>> ['Let', 'me', 'tell', 'you', 'something', 'you', 'already', 'know', '.']
+
+sentence = SentenceTokenization().detokenize(tokens)
+sentence
+>> 'Let me tell you something you already know.'
+
+sequence = "Let me tell you something you already know. The world ain’t all sunshine and rainbows."
+sentences = SequenceTokenization().tokenize(sequence)
+sentences
+>> ['Let me tell you something you already know.', 'The world ain’t all sunshine and rainbows.']
+
+sequence = SequenceTokenization().detokenize(sentences)
+sequence
+>> 'Let me tell you something you already know. The world ain’t all sunshine and rainbows.'
 ```
 
 Featuring
@@ -100,6 +160,23 @@ Modeling
     * 1 feature and predict 1 label
     * 1 feature and predict multiple labels
 ```
+Be careful, the classifier works only with stacked column:
+
+This way works:
+
+| feature      | label    |
+|--------------|----------|
+| I love it    | positive |
+| I don't know | neutral  |
+| I hate you   | negative |
+
+This way doesn't works:
+
+| feature      | positive | negative | neutral |
+|--------------|----------|----------|---------|
+| I love it    | 1        | 0        | 0       |
+| I don't know | 0        | 1        | 0       |
+| I hate you   | 0        | 0        | 1       |
 
 ```python
 import os
