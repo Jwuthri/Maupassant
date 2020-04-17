@@ -2,7 +2,6 @@
 
 ![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)
 ![Python package](https://github.com/Jwuthri/Maupassant/workflows/Python%20package/badge.svg)
-![Package Status](https://img.shields.io/pypi/status/maupassant.svg)
 -----------------
 
 Maupassant is a suite of open source Python module for Natural Language. All the modules are really easy to use, but at the same time you can tune them easily. 
