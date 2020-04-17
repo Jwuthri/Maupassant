@@ -82,6 +82,12 @@ decontraction_text = tn.text_decontraction(text)
 decontraction_text
 >> 'I would like to know you all guys'
 
+# Stemming word
+word = "shipping"
+stemmed_word = TextNormalization().word_stemming(word)
+stemmed_word
+>> 'ship'
+
 # example of sentence cleaning:
 text = "I'd like to tell you somthing you alrady know."
 decontraction_text = tn.text_decontraction(text)
@@ -101,21 +107,24 @@ cleaned_text
 ```python
 from maupassant.preprocessing.tokenization import SentenceTokenization, SequenceTokenization
 
-
+# Sentence Tokenization
 sentence = "Let me tell you something you already know."
 tokens = SentenceTokenization().tokenize(sentence)
 tokens
 >> ['Let', 'me', 'tell', 'you', 'something', 'you', 'already', 'know', '.']
 
+# Sentence DeTokenization
 sentence = SentenceTokenization().detokenize(tokens)
 sentence
 >> 'Let me tell you something you already know.'
 
+# Sequence Tokenization
 sequence = "Let me tell you something you already know. The world ain’t all sunshine and rainbows."
 sentences = SequenceTokenization().tokenize(sequence)
 sentences
 >> ['Let me tell you something you already know.', 'The world ain’t all sunshine and rainbows.']
 
+# Sequence DeTokenization
 sequence = SequenceTokenization().detokenize(sentences)
 sequence
 >> 'Let me tell you something you already know. The world ain’t all sunshine and rainbows.'
