@@ -100,7 +100,12 @@ Modeling
 * Each models can work with:
     * 1 feature and predict 1 label
     * 1 feature and predict multiple labels
-    * multiple features and predict 1 label
+```
+
+```python
+from maupassant.classifier import task
+
+task.train(train_path, test_path, val_path, feature, label, architecture, label_type)
 ```
 ###### Text Extraction
 ```
@@ -116,6 +121,6 @@ Modeling
 ```
 ###### Text Question Answer
 ```
-* From a given context, find the best answer for a question
+* For a given context, find the best answer for a question
 ```
 
