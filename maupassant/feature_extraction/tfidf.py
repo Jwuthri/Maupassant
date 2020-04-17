@@ -34,7 +34,7 @@ class Tfidf(object):
 	@timer
 	def fit(self, documents):
 		assert type(documents) in [list, np.ndarray]
-		self.tfidf.fit_model(documents)
+		self.tfidf.fit(documents)
 
 	@timer
 	def transform(self, document):
