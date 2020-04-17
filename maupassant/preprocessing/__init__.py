@@ -1,0 +1,6 @@
+# input_text = tf.keras.Input((), dtype = tf.string, name = 'input_text')
+# embed_use = hub.load("3/")
+# embedding = hub.KerasLayer(embed_use, input_shape = [], dtype = tf.string, trainable = False)(input_text)
+# dense = tf.keras.layers.Dense(512, activation="relu", name="hidden_layer")(embedding)
+# intent = tf.keras.layers.Dense(20, activation="sigmoid", name="output")(dense)
+# sentiment = tf.keras.layers.Dense(1, activation="sigmoid", name="output2")(dense)
