@@ -112,8 +112,10 @@ termcolor==1.1.0
 terminado==0.8.3
 testpath==0.4.4
 textsearch==0.0.17
+torch=1.4.0
 tornado==6.0.4
 traitlets==4.3.3
+transformers==2.8.0
 umap-learn==0.3.10
 Unidecode==1.1.1
 urllib3==1.25.8
