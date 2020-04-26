@@ -16,5 +16,8 @@ class TryModel(object):
     def predict(self):
         st.title("Inference")
         text_2_predict = st.text_area("enter text predict")
-        prediction = self.predictor.predict_one(text_2_predict, threshold=0.5)
-        st.json(prediction)
+        if text_2_predict != "":
+            threshold = st.slider("threshold", 0.0, 1.0)
+            prediction = self.predictor.predict_one(text_2_predict, threshold=threshold)
+            prediction = {str(k): v for k, v in prediction.items()}
+            st.json(prediction)

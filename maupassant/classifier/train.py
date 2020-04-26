@@ -85,5 +85,8 @@ if __name__ == '__main__':
     test_df = pd.read_csv(test_path)
     val_df = pd.read_csv(val_path)
 
-    train = Trainer(train_df, test_df, val_df, "multi-label", "CNN_GRU_NN", "feature", "intent", epochs=5)
+    train = Trainer(
+        train_df, test_df, val_df, "multi-label", "CNN_NN", "feature", "intent",
+        epochs=10, multi_label=True, batch_size=300, buffer_size=512
+    )
     model_path = train.main()
