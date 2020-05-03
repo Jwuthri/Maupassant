@@ -1,5 +1,6 @@
 from maupassant.summarizer.model import GoogleT5, WeightedTfIdf
 from maupassant.utils import timer
+from maupassant.summarizer.model import WeightedTfIdf, GoogleT5
 
 
 class Predictor(object):
