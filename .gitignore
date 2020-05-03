@@ -8,6 +8,7 @@ __pycache__
 build/
 *.egg-info/
 dist/
+notebooks/
 
 # Data
 *.csv
