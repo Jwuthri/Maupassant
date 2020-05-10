@@ -37,14 +37,21 @@ class GoogleT5(object):
 
 class WeightedTfIdf(object):
 
-    def __init__(self, keywords):
+    def __init__(self, keywords, min_threshold, rate_max=0.66):
         self.stemmer = TextNormalization()
         self.stopwords = pickle.load(open(os.path.join(EXTERNAL_PATH, 'stopwords.p'), "rb"))
         self.keywords = keywords
+        self.set_keywords(keywords)
+        self.min_threshold = min_threshold
+        self.rate_max = rate_max
         self.augmented_keywords = self.keywords_augmentation()
 
     def keywords_augmentation(self):
+        # raise NotImplemented()
         return self.keywords
+
+    def set_keywords(self, keywords):
+        self.keywords = [self.stemmer.word_stemming(w) for w in keywords]
 
     def create_dictionary(self, text):
         tokens = SentenceTokenization().tokenize(text)
@@ -75,9 +82,8 @@ class WeightedTfIdf(object):
         df["word"] = dictionary
         ddf = df[~df["word"].isin(self.keywords)]
         ddf = ddf.drop(columns=["word"])
-        ddf = ddf.as_matrix()
 
-        max_word_frequencies = np.max(ddf)
+        max_word_frequencies = np.max(ddf.values)
         rows, cols = matrix.shape
         for row in range(rows):
             for col in range(cols):
@@ -109,12 +115,16 @@ class WeightedTfIdf(object):
 
     @timer
     def predict(self, text):
+        print(self.keywords)
         sequence_to_sentences = SequenceTokenization().tokenize(text)
+        max_length = max(int(len(sequence_to_sentences) * self.rate_max), 1)
         dictionary = self.create_dictionary(text)
         tf = self.create_matrix(dictionary, sequence_to_sentences)
         idf = self.compute_term_frequency(tf, dictionary)
         u, sigma, v = np.linalg.svd(idf, full_matrices=False)
         ranks = self.compute_ranks(sigma, v)
-        res = self.get_best_sentences(sequence_to_sentences, ranks)
+        ranked_sentences = self.get_best_sentences(sequence_to_sentences, ranks)
+        relevant_sentences = [k for k, v in ranked_sentences.items() if v > self.min_threshold][:max_length]
+        ordered_sentences = [sentence for sentence in sequence_to_sentences if sentence in relevant_sentences]
 
-        return res
+        return " ".join(ordered_sentences), ranked_sentences

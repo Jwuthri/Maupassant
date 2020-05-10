@@ -1,11 +1,92 @@
 import os
+import json
+import pickle
 import shutil
+import datetime
 
 from comet_ml import Experiment
+import tensorflow as tf
 
-from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE
-from maupassant.tensorflow_utils import TrainerHelper
+from maupassant.utils import timer
+from maupassant.classifier.model import Model
 from maupassant.dataset.tensorflow import TensorflowDataset
+from maupassant.tensorflow_utils import macro_soft_f1, macro_f1
+from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE, MODEL_PATH
+
+
+class TrainerHelper(Model):
+    """Tool to train model."""
+
+    def __init__(self, label_type, architecture, number_labels, embedding_type):
+        self.model = tf.keras.Sequential()
+        super().__init__(label_type, architecture, number_labels, embedding_type)
+
+    def compile_model(self):
+        if self.info['label_type'] == "binary-label":
+            self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["binary_accuracy"])
+        elif self.info['label_type'] == "multi-label":
+            self.model.compile(optimizer="adam", loss=macro_soft_f1,
+                metrics=[macro_f1, "categorical_accuracy", "top_k_categorical_accuracy"])
+        else:
+            self.model.compile(optimizer="adam", loss="sparse_categorical_crossentropy",
+                metrics=["sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy"])
+
+    @staticmethod
+    def callback_func(checkpoint_path, tensorboard_dir=None):
+        checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, verbose=1, period=5)
+        if tensorboard_dir:
+            tensorboard = tf.keras.callbacks.TensorBoard(log_dir=tensorboard_dir, histogram_freq=1)
+            return [tensorboard, checkpoint]
+        else:
+            return [checkpoint]
+
+    @timer
+    def fit_model(self, train_dataset, val_dataset, epochs=30, callbacks=[]):
+        return self.model.fit(train_dataset, epochs=epochs, validation_data=val_dataset, callbacks=callbacks)
+
+    @staticmethod
+    def define_paths(classifier, label):
+        date = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        name = f"{classifier}_{label}_{date}"
+        base_dir = os.path.join(MODEL_PATH, name)
+
+        return {
+            "path": base_dir,
+            "model_path": os.path.join(base_dir, 'model'),
+            "model_plot":  os.path.join(base_dir, "model.jpg"),
+            "model_info": os.path.join(base_dir, "model.json"),
+            "metrics_path": os.path.join(base_dir, "metrics.json"),
+            "tensorboard_path": os.path.join(base_dir, "tensorboard"),
+            "checkpoint_path": os.path.join(base_dir, "checkpoint"),
+        }
+
+    @staticmethod
+    def export_model_plot(path, model):
+        tf.keras.utils.plot_model(model, to_file=path)
+
+    @staticmethod
+    def export_model(path, model):
+        tf.keras.experimental.export_saved_model(model, path)
+        print(f"Model has been exported here => {path}")
+
+    @staticmethod
+    def export_encoder(directory, label_data):
+        for k, v in label_data.items():
+            path = os.path.join(directory, f"{v['id']}_{v['label_type']}_{k}_encoder.pkl")
+            pickle.dump(v['encoder'], open(path, "wb"))
+            print(f"{k} encoder has been exported here => {path}")
+
+    @staticmethod
+    def export_info(path, info):
+        with open(path, 'w') as outfile:
+            json.dump(info, outfile)
+            print(f"Model information have been exported here => {path}")
+
+    @staticmethod
+    def export_metrics(path, metrics):
+        with open(path, 'w') as outfile:
+            json.dump(metrics, outfile)
+            print(f"Model metrics have been exported here => {path}")
 
 
 class Trainer(TrainerHelper):
