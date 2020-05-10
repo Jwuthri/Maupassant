@@ -9,12 +9,13 @@ class Summarizer(object):
         self.model_name = model_name
         self.model = self.set_model(self.model_name)
 
-    def set_model(self, model_name, keywords=[], min_threshold=1.35):
+    @staticmethod
+    def set_model(model_name, keywords=[], min_threshold=1.35):
         return Predictor(model_name=model_name, keywords=keywords, min_threshold=min_threshold)
 
     def main(self):
         if self.model_name == "TfIdf":
-            min_threshold = st.slider("Set the minimum sentences threshold", 0.0, 5.0, 1.35)
+            min_threshold = st.slider("Set the minimum sentences threshold", 1.0, 5.0, 1.35)
             keywords = st.text_input('Enter your keywords here separate by "," example', "refund, return")
             keywords = keywords.split(",")
             keywords = [x.strip() for x in keywords]

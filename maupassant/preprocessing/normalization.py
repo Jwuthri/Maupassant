@@ -8,6 +8,8 @@ from nltk.stem import LancasterStemmer
 from nltk.stem import WordNetLemmatizer
 from nltk.stem.snowball import SnowballStemmer
 
+from maupassant.preprocessing.tokenization import SentenceTokenization
+
 
 class TextNormalization:
 
@@ -36,8 +38,14 @@ class TextNormalization:
         else:
             return self.lemstem.stem(word)
 
+    def text_stemming(self, text):
+        words = SentenceTokenization().tokenize(text)
+        stemmed = [self.word_stemming(word) for word in words]
+
+        return SentenceTokenization().detokenize(stemmed)
+
     @staticmethod
-    def text_demojis(text, how_replace="mean"):
+    def text_demojis(text, how_replace=""):
         emojis = emot.emoji(text)
         if emojis['flag']:
             for index in range(len(emojis["value"])):
@@ -51,7 +59,7 @@ class TextNormalization:
         return text
 
     @staticmethod
-    def text_demoticons(text, how_replace="mean"):
+    def text_demoticons(text, how_replace=""):
         emoticons = emot.emoticons(text)
         if emoticons['flag']:
             for index in range(len(emoticons["value"])):

@@ -1,5 +1,11 @@
-![Python 3.7](maupassant/website/static/img/logo/logo.png)
-
+```
+     __  ___                                              __
+    /  |/  /___ ___  ______  ____ _______________ _____  / /_
+   / /|_/ / __ `/ / / / __ \/ __ `/ ___/ ___/ __ `/ __ \/ __/
+  / /  / / /_/ / /_/ / /_/ / /_/ (__  |__  ) /_/ / / / / /_
+ /_/  /_/\__,_/\__,_/ .___/\__,_/____/____/\__,_/_/ /_/\__/
+                   /_/
+```
 ![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)
 ![Python package](https://github.com/Jwuthri/Maupassant/workflows/Python%20package/badge.svg)
 -----------------
