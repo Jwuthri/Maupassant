@@ -52,7 +52,7 @@ class TestNormalization:
 
     def test_text_demoticons(self):
         text = 'Let me tell you something you already know :)'
-        demoticons_text = TextNormalization().text_demoticons(text, how_replace='mean)
+        demoticons_text = TextNormalization().text_demoticons(text, how_replace='mean')
         assert demoticons_text == 'Let me tell you something you already know Happy face or smiley'
         demoticons_text = TextNormalization().text_demoticons(text, how_replace="")
         assert demoticons_text == 'Let me tell you something you already know '
