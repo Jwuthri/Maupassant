@@ -45,14 +45,14 @@ class TestNormalization:
 
     def test_text_demojize(self):
         text = 'Let me tell you something you already know 👍'
-        demojize_text = TextNormalization().text_demojis(text)
+        demojize_text = TextNormalization().text_demojis(text, how_replace='mean')
         assert demojize_text == 'Let me tell you something you already know thumbs_up'
         demojize_text = TextNormalization().text_demojis(text, how_replace="")
         assert demojize_text == 'Let me tell you something you already know '
 
     def test_text_demoticons(self):
         text = 'Let me tell you something you already know :)'
-        demoticons_text = TextNormalization().text_demoticons(text)
+        demoticons_text = TextNormalization().text_demoticons(text, how_replace='mean)
         assert demoticons_text == 'Let me tell you something you already know Happy face or smiley'
         demoticons_text = TextNormalization().text_demoticons(text, how_replace="")
         assert demoticons_text == 'Let me tell you something you already know '
