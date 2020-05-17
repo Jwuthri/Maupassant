@@ -1,52 +1,54 @@
 import pickle
 
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.decomposition import PCA, TruncatedSVD, SparsePCA
+from sklearn import preprocessing
 from umap import UMAP
 
 from maupassant.utils import timer
 
 
-class Decomposition:
+class Decomposition(object):
 
-    def __int__(self, model='QDA'):
+    def __init__(self, model='QDA', n_components=2):
         self.model = model.upper()
-        self.decomposition = self.get_decomposition()
+        self.n_components = n_components
+        self.decomposition = self.get_decomposition(n_components=n_components)
 
-    @property  
-    def get_decomposition(self):
-        assert self.model in ["LDA", "QDA", "PCA", "SVD", "SPCA", "UMAP"]
+    def get_decomposition(self, n_components):
+        assert self.model in ["LDA", "PCA", "SVD", "SPCA", "UMAP"]
         if self.model == "LDA":
-            return LinearDiscriminantAnalysis
-        elif self.model == "QDA":
-            return QuadraticDiscriminantAnalysis
+            return LinearDiscriminantAnalysis(n_components=n_components)
         elif self.model == "PCA":
-            return PCA
+            return PCA(n_components=n_components)
         elif self.model == "SVD":
-            return TruncatedSVD
+            return TruncatedSVD(n_components=n_components)
         elif self.model == "SPCA":
-            return SparsePCA
+            return SparsePCA(n_components=n_components)
         elif self.model == "UMAP":
-            return UMAP
+            return UMAP(n_components=n_components)
 
     @timer
-    def fit(self, x, y=None, n_components=0.95):
-        if self.model == "LDA":
-            self.decomposition = self.decomposition(n_components=n_components)
-            self.decomposition.fit_model(X=x, y=y)
-        elif self.model == "UMAP":
-            self.decomposition = self.decomposition(n_components=n_components)
-            self.decomposition.fit_model(X=x, y=y)
-        elif self.model == "QDA":
-            self.decomposition = self.decomposition()
-            self.decomposition.fit_model(X=x, y=y)
+    def fit(self, x, y=None):
+        if self.model == "UMAP":
+            if y is not None:
+                le = preprocessing.LabelEncoder()
+                le.fit(y)
+                y = le.transform(y)
+            self.decomposition.fit(X=x, y=y)
         else:
-            self.decomposition = self.decomposition(n_components=n_components)
-            self.decomposition.fit_model(X=x)
+            self.decomposition.fit(X=x, y=y)
 
     @timer
-    def transform(self, x):
-        return self.decomposition.tranform(X=x)
+    def transform(self, x, y=None):
+        if self.model == "UMAP":
+            if y is not None:
+                le = preprocessing.LabelEncoder()
+                le.fit(y)
+                y = le.transform(y)
+            return self.decomposition.fit_transform(X=x, y=y)
+        else:
+            return self.decomposition.transform(X=x)
 
     def save(self, filename):
         pickle.dump(self.decomposition, open(filename, "wb"))

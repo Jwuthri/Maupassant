@@ -12,10 +12,9 @@ class Tfidf(object):
 		self.unigrams = unigrams
 		self.bigrams = bigrams
 		self.analyzer = analyzer
-		self.ngram_range = self.get_ngrams_range
-		self.tfidf = self.get_tfidf
+		self.ngram_range = self.get_ngrams_range()
+		self.tfidf = self.get_tfidf()
 
-	@property
 	def get_ngrams_range(self):
 		contains_one_of = self.unigrams or self.bigrams
 		assert contains_one_of is True
@@ -27,7 +26,6 @@ class Tfidf(object):
 		else:
 			return 2, 2
 
-	@property
 	def get_tfidf(self):
 		return TfidfVectorizer(analyzer=self.analyzer, ngram_range=self.ngram_range)
 
