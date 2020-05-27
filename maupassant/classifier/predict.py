@@ -3,6 +3,7 @@ import glob
 import json
 import pickle
 
+import numpy as np
 import tensorflow_text
 import tensorflow as tf
 import tensorflow_hub as hub
@@ -70,3 +71,12 @@ class Predictor(object):
             results.append([self.predict_classes(prediction, threshold) for prediction in predictions])
 
         return results
+
+
+if __name__ == '__main__':
+    model_path = "/home/jwuthri/Documents/GitHub/Maupassant/maupassant/models/binary-label_is_relevant_2020_05_21_15_13_03"
+    pred = Predictor(model_path)
+    data = np.asarray(['My order number is 62767'])
+    print(pred.predict_one(x=data))
+    data = np.asarray(['Hello'])
+    print(pred.predict_one(x=data))

@@ -5,7 +5,7 @@ import streamlit as st
 
 from maupassant.settings import MODEL_PATH
 from maupassant.stream_app.featuring import Featuring
-from maupassant.stream_app.reduction import DimensionReduction
+from maupassant.stream_app.full_application import TextApplication
 from maupassant.stream_app.trained_model import TrainedModel
 from maupassant.stream_app.summarizer import Summarizer
 from maupassant.stream_app.normalization import Normalization
@@ -19,10 +19,10 @@ def load_tfidf():
 def main():
     """Run the streamlit application."""
     st.sidebar.title("Which application ?")
-    applications = ["Index", "Summarization", "Normalization", "Trained Models", "Featuring", "Plot 2D/3D"]
+    applications = ["Index", "Summarization", "Normalization", "Models", "Featuring", "Application"]
     app_mode = st.sidebar.selectbox("Choose the application", applications)
     if app_mode == "Index":
-        st.subheader("Maupassant demo site!")
+        st.title("Maupassant demo site!")
 
     elif app_mode == "Summarization":
         st.title("Text Summarization")
@@ -37,7 +37,7 @@ def main():
         st.title("Text normalization")
         Normalization().main()
 
-    elif app_mode == "Trained Models":
+    elif app_mode == "Models":
         st.title("Use pretrained models")
         cached_models()
 
@@ -46,9 +46,9 @@ def main():
         model_name = st.selectbox("Choose the feature extraction model", ["TfIdf", "MultilangEmbedding"])
         Featuring(model_name).main()
 
-    elif app_mode == "Plot 2D/3D":
-        st.title("Plot 2D/3D")
-        DimensionReduction().main()
+    elif app_mode == "Application":
+        st.title("Text Application")
+        TextApplication().main()
 
 
 def cached_models():

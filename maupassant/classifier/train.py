@@ -8,13 +8,13 @@ from comet_ml import Experiment
 import tensorflow as tf
 
 from maupassant.utils import timer
-from maupassant.classifier.model import Model
+from maupassant.classifier.model import TensorflowModel
 from maupassant.dataset.tensorflow import TensorflowDataset
 from maupassant.tensorflow_utils import macro_soft_f1, macro_f1
 from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE, MODEL_PATH
 
 
-class TrainerHelper(Model):
+class TrainerHelper(TensorflowModel):
     """Tool to train model."""
 
     def __init__(self, label_type, architecture, number_labels, embedding_type):
@@ -23,13 +23,13 @@ class TrainerHelper(Model):
 
     def compile_model(self):
         if self.info['label_type'] == "binary-label":
-            self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["binary_accuracy"])
+            self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=[macro_f1, "binary_accuracy"])
         elif self.info['label_type'] == "multi-label":
             self.model.compile(optimizer="adam", loss=macro_soft_f1,
                 metrics=[macro_f1, "categorical_accuracy", "top_k_categorical_accuracy"])
         else:
             self.model.compile(optimizer="adam", loss="sparse_categorical_crossentropy",
-                metrics=["sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy"])
+                metrics=[macro_f1, "sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy"])
 
     @staticmethod
     def callback_func(checkpoint_path, tensorboard_dir=None):
@@ -62,7 +62,7 @@ class TrainerHelper(Model):
 
     @staticmethod
     def export_model_plot(path, model):
-        tf.keras.utils.plot_model(model, to_file=path)
+        tf.keras.utils.plot_model(model, to_file=path, show_shapes=True)
 
     @staticmethod
     def export_model(path, model):
@@ -156,18 +156,19 @@ class Trainer(TrainerHelper):
 
 if __name__ == '__main__':
     import pandas as pd
+    from sklearn.utils import shuffle
     from maupassant.settings import DATASET_PATH
 
-    train_path = os.path.join(DATASET_PATH, "one_to_one", "train_intent.csv")
-    test_path = os.path.join(DATASET_PATH, "one_to_one", "test_intent.csv")
-    val_path = os.path.join(DATASET_PATH, "one_to_one", "val_intent.csv")
+    train_path = os.path.join(DATASET_PATH, "one_to_one", "train_summarization.csv")
+    test_path = os.path.join(DATASET_PATH, "one_to_one", "val_summarization.csv")
+    val_path = os.path.join(DATASET_PATH, "one_to_one", "val_summarization.csv")
 
-    train_df = pd.read_csv(train_path)
-    test_df = pd.read_csv(test_path)
-    val_df = pd.read_csv(val_path)
+    train_df = shuffle(pd.read_csv(train_path))
+    test_df = shuffle(pd.read_csv(test_path))
+    val_df = shuffle(pd.read_csv(val_path))
 
     train = Trainer(
-        train_df, test_df, val_df, "multi-label", "CNN_NN", "feature", "intent",
-        epochs=10, multi_label=True, batch_size=300, buffer_size=512
+        train_df, test_df, val_df, "binary-label", "CNN", "sentences", "is_relevant_hard",
+        epochs=10, multi_label=False, batch_size=512, buffer_size=512
     )
     model_path = train.main()

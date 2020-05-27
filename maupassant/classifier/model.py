@@ -3,7 +3,7 @@ import tensorflow as tf
 from maupassant.feature_extraction.embedding import Embedding
 
 
-class Model(object):
+class TensorflowModel(object):
     """Setup the model."""
 
     def __init__(self, label_type, architecture, number_labels, embedding_type):
@@ -33,9 +33,9 @@ class Model(object):
         layer = embed_module.model(input_layer)
         layer = tf.keras.layers.Reshape(target_shape=(1, 512))(layer)
 
-        if self.architecture in ['CNN_NN', 'CNN_GRU_NN']:
+        if self.architecture in ['CNN', 'CNN_GRU']:
             layer = tf.keras.layers.Conv1D(512, 3, padding='same', activation='relu', strides=1)(layer)
-            if self.architecture == 'CNN_GRU_NN':
+            if self.architecture == 'CNN_GRU':
                 layer = tf.keras.layers.Conv1D(256, 3, padding='same', activation='relu', strides=1)(layer)
                 layer = tf.keras.layers.GRU(128, activation='relu')(layer)
             else:

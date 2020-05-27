@@ -7,20 +7,21 @@ from maupassant.utils import predict_format
 
 class Embedding(object):
 
-    def __init__(self, model_type='multilingual'):
+    def __init__(self, model_type='multilingual', name="KerasLayer"):
+        self.name = name
         self.model_type = model_type.lower()
         self.model = self.init_model()
 
     def init_model(self):
         assert self.model_type in ["multilingual", "multilingual-qa", "english"]
         module_mapping = {
-            "multilingual": "https://tfhub.dev/google/universal-sentence-encoder-multilingual/3",
+                "multilingual": "https://tfhub.dev/google/universal-sentence-encoder-multilingual/3",
             "multilingual-qa": "https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/3",
             "english": "https://tfhub.dev/google/universal-sentence-encoder/4"
         }
         bert_module = module_mapping[self.model_type]
 
-        return hub.KerasLayer(bert_module, input_shape=[], dtype=tf.string, trainable=False, name="KerasLayer")
+        return hub.KerasLayer(bert_module, input_shape=[], dtype=tf.string, trainable=False, name=self.name)
 
     @predict_format
     def predict_one(self, x):
