@@ -16,7 +16,7 @@ notebooks/
 *.pkl
 *checkpoint/
 *tensorboard/
-*models/
+*models/*/
 
 # Env
 venv/
