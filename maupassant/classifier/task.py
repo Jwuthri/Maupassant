@@ -16,7 +16,6 @@ from maupassant.classifier.predict import Predictor
 @click.option("architecture", default="CNN_NN", type=str)
 @click.option("label_type", default="CNN_NN", type=str)
 def train(train_path, test_path, val_path, feature, label, architecture, label_type):
-    """Run a specific task, as training or predicting."""
     train_df = pd.read_csv(train_path)
     test_df = pd.read_csv(test_path)
     val_df = pd.read_csv(val_path)

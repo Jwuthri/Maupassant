@@ -1,4 +1,3 @@
-import os
 import glob
 import json
 import pickle
@@ -13,7 +12,6 @@ from maupassant.utils import predict_format
 
 
 class Predictor(object):
-    """Tool to predict through the model."""
 
     def __init__(self, model_path):
         self.model_path = model_path
@@ -72,11 +70,15 @@ class Predictor(object):
 
         return results
 
+    def predict(self, x, threshold=0):
+        return self.predict_one(x, threshold)
+
 
 if __name__ == '__main__':
-    model_path = "/home/jwuthri/Documents/GitHub/Maupassant/maupassant/models/binary-label_is_relevant_2020_05_21_15_13_03"
+    import os
+    from maupassant.settings import MODEL_PATH
+
+    model_path = os.path.join(MODEL_PATH, "multi-label_intent_2020_04_23_14_05_54")
     pred = Predictor(model_path)
     data = np.asarray(['My order number is 62767'])
-    print(pred.predict_one(x=data))
-    data = np.asarray(['Hello'])
-    print(pred.predict_one(x=data))
+    print(pred.predict(data))

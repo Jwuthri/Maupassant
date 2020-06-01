@@ -3,8 +3,8 @@ import click
 
 import pandas as pd
 
-from maupassant.classifier.train import Trainer
-from maupassant.classifier.predict import Predictor
+from maupassant.summarizer.train import Trainer
+from maupassant.summarizer.predict import Predictor
 
 
 @click.command()
@@ -14,9 +14,8 @@ from maupassant.classifier.predict import Predictor
 @click.argument("feature", type=str)
 @click.argument("label", type=str)
 @click.option("architecture", default="CNN_NN", type=str)
-@click.option("label_type", default="CNN_NN", type=str)
+@click.option("label_type", default="multi-label", type=str)
 def train(train_path, test_path, val_path, feature, label, architecture, label_type):
-    """Run a specific task, as training or predicting."""
     train_df = pd.read_csv(train_path)
     test_df = pd.read_csv(test_path)
     val_df = pd.read_csv(val_path)
@@ -29,10 +28,11 @@ def train(train_path, test_path, val_path, feature, label, architecture, label_t
 @click.command()
 @click.argument("model_path", type=click.Path(exists=True))
 @click.argument("example", type=str)
-def predict(model_path, example):
+@click.argument("threshold", type=float)
+def predict(model_path, example, threshold):
     path = os.path.join(model_path, "model")
     predictor = Predictor(path)
-    pred = predictor.predict_one(example)
+    pred = predictor.predict(example, threshold)
     print(pred)
 
     return pred

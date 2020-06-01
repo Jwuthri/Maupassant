@@ -173,7 +173,6 @@ Modeling
     * CNN_GRU_NN (advanced)
 * Each models can work with:
     * 1 feature and predict 1 label
-    * 1 feature and predict multiple labels
 ```
 Be careful, the classifier works only with stacked column:
 
@@ -223,14 +222,18 @@ model_path = train.main()
 train = Trainer(train_df, test_df, val_df, "multi-label", "CNN_GRU_NN", "feature", "multi", epochs=5, multi_label=True)
 model_path = train.main()
 # results = ["Ok": "neutral", "I don't like this": "negative", "I like it": "positive", "Fuck you": ("negative", "toxic", "insult")]
-
 ```
 ###### Text Extraction
 ```
-* Weighted TF-IDF
-    * Here you need to provide a list of keywords (WIP)
-* AutoEncoders
-    * WIP
+* 3 differents predefine models (work in multilanguage):
+    * NN (basic)
+    * GRU (intermediate)
+    * CNN (intermediate)
+    * CNN_LSTM (advanced)
+    * CNN_GRU (advanced)
+* Each models can work with:
+    * 1 feature and predict 1 label, binary-label
+    * 2 features and prediction 1 label, binary-label
 ```
 ###### Text Similarity
 ```

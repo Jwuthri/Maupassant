@@ -172,6 +172,9 @@ class Trainer(TrainerHelper):
         val_macro_f1 = history.history["val_macro_f1"]
         metrics = {"loss": loss, "val_loss": val_loss, "macro_f1": macro_f1, "val_macro_f1": val_macro_f1}
         metrics = {metric: [round(float(value), 5) for value in values] for metric, values in metrics.items()}
+        self.info['label'] = self.label
+        self.info['first_input'] = self.feature
+        self.info['second_label'] = self.text
 
         self.export_model(paths['model_path'], self.model)
         self.export_encoder(paths['path'], label_encoder)
@@ -199,12 +202,12 @@ if __name__ == '__main__':
     test_path = os.path.join(DATASET_PATH, "one_to_one", "val_summarization.csv")
     val_path = os.path.join(DATASET_PATH, "one_to_one", "val_summarization.csv")
 
-    train_df = shuffle(pd.read_csv(train_path, nrows=500000))
-    test_df = shuffle(pd.read_csv(test_path, nrows=200000))
-    val_df = shuffle(pd.read_csv(val_path, nrows=200000))
+    train_df = shuffle(pd.read_csv(train_path, nrows=800000))
+    test_df = shuffle(pd.read_csv(test_path))
+    val_df = shuffle(pd.read_csv(val_path, nrows=100000))
 
     train = Trainer(
-        train_df, test_df, val_df, architecture="CNN_LSTM", feature="sentences", label="is_relevant_hard", text="text",
-        epochs=3, batch_size=512, buffer_size=512
+        train_df, test_df, val_df, architecture="CNN_LSTM", feature="sentences", label="is_relevant", text="text",
+        epochs=2, batch_size=1024, buffer_size=1024
     )
     model_path = train.main()
