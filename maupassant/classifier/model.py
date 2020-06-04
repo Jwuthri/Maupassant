@@ -4,7 +4,6 @@ from maupassant.feature_extraction.embedding import Embedding
 
 
 class TensorflowModel(object):
-    """Setup the model."""
 
     def __init__(self, label_type, architecture, number_labels, embedding_type):
         self.label_type = label_type
