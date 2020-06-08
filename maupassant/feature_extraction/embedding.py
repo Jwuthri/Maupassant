@@ -15,7 +15,7 @@ class Embedding(object):
     def init_model(self):
         assert self.model_type in ["multilingual", "multilingual-qa", "english"]
         module_mapping = {
-                "multilingual": "https://tfhub.dev/google/universal-sentence-encoder-multilingual/3",
+            "multilingual": "https://tfhub.dev/google/universal-sentence-encoder-multilingual/3",
             "multilingual-qa": "https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/3",
             "english": "https://tfhub.dev/google/universal-sentence-encoder/4"
         }
