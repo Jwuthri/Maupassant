@@ -13,6 +13,8 @@ from maupassant.dataset.pandas import remove_rows_contains_null
 from maupassant.text_prediction.dataset import DatasetGenerator
 from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE, MODEL_PATH
 
+tf.compat.v1.disable_eager_execution()
+
 
 class TrainerHelper(TensorflowModel):
     """Tool to train model."""
@@ -83,7 +85,7 @@ class Trainer(TrainerHelper):
 
     def __init__(
             self, dataset, architecture, feature, lang="english", words_predict=1, use_comet=True, epochs=10,
-            api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE):
+            batch_size=32, api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE):
         self.words_predict = words_predict
         self.lang = lang
         self.epochs = epochs
@@ -94,7 +96,7 @@ class Trainer(TrainerHelper):
         self.use_comet = use_comet
         self.feature = feature
         dataset = remove_rows_contains_null(dataset, self.feature)
-        self.__dataset__ = DatasetGenerator()
+        self.__dataset__ = DatasetGenerator(batch_size=batch_size)
         self.train_dataset, self.test_dataset, self.val_dataset = self.__dataset__.generate(dataset[feature])
         self.label_encoder = {
             self.feature: {"encoder": self.__dataset__.le, "label_type": self.label_type, "id": self.words_predict}}
