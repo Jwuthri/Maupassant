@@ -58,7 +58,8 @@ class TrainerHelper(TensorflowModel):
 
     @staticmethod
     def export_model(path, model):
-        model.save(path)
+        model.save(os.path.join(path, "model.h5"))
+        model.save_weights(os.path.join(path, "model_weights"))
         print(f"Model has been exported here => {path}")
 
     @staticmethod
