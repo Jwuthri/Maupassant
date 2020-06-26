@@ -1,6 +1,7 @@
 import re
 import ast
 import tqdm
+import emot
 
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
@@ -40,9 +41,24 @@ class DatasetGenerator(object):
 
         return self.tokenize_text(concat_text)
 
+    def remove_tokens(self, tokens):
+        for token in tokens:
+            if token in self.tokenizer.word_index:
+                del self.tokenizer.word_index[token]
+
+    def clean_tokenizer(self):
+        to_remove = [
+            '(', ')', '-', '/', '@', '#', '%', '^', '&', '*', '_', '{', '}', '|', '>',
+            '<', ':', ';', '"', '$', '\x06', ' ', '\x08']
+        self.remove_tokens(to_remove)
+        self.remove_tokens([str(i) for i in range(100000)])
+        self.remove_tokens([x for x in emot.EMOTICONS.keys()])
+        self.remove_tokens([x for x in emot.UNICODE_EMO.keys()])
+
     def set_tokenizer(self, text):
         self.tokenizer.fit_on_texts([text])
         self.vocab_size = len(self.tokenizer.word_index) + 1
+        self.clean_tokenizer()
 
     def create_sequences(self, dataset, commons_ngrams=None):
         sequences = list()
