@@ -1,3 +1,4 @@
+import re
 import emot
 import contractions
 
@@ -75,3 +76,26 @@ class TextNormalization:
     @staticmethod
     def text_decontraction(text):
         return contractions.fix(text)
+
+    @staticmethod
+    def spec_add_spaces(text):
+        return re.sub(r'([/#\n])', r' \1 ', text)
+
+    @staticmethod
+    def remove_multiple_spaces(text):
+        return re.sub(' {2,}', ' ', text)
+
+    @staticmethod
+    def _replace_group(m):
+        c, cc = m.groups()
+        return c
+
+    def replace_char_rep(self, text):
+        char_rep = re.compile(r'(\S)(\1{2,})')
+
+        return char_rep.sub(self._replace_group, text)
+
+    def replace_words_rep(self, text):
+        word_rep = re.compile(r'(\b\w+\W+)(\1{2,})')
+
+        return word_rep.sub(self._replace_group, text)

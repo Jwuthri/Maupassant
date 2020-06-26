@@ -4,9 +4,7 @@ import json
 import pickle
 
 import numpy as np
-import tensorflow_text
 import tensorflow as tf
-import tensorflow_hub as hub
 
 from maupassant.utils import timer
 from maupassant.utils import predict_format
@@ -28,10 +26,7 @@ class Predictor(object):
         return info
 
     def load_model(self):
-        return tf.keras.experimental.load_from_saved_model(
-            os.path.join(self.model_path, "model"),
-            custom_objects={'KerasLayer': hub.KerasLayer}
-        )
+        return tf.keras.models.load_model(self.model_path)
 
     def load_encoder(self):
         path = os.path.join(self.model_path, "*encoder.pkl")

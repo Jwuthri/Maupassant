@@ -51,7 +51,7 @@ class TensorflowModel(object):
         else:
             model, input_model = self.get_sub_model(architecture=self.architecture, name="input_sentences")
             if self.architecture == "CNN_LSTM":
-                model = tf.keras.layers.LSTM(128, activation='relu')(model)
+                    model = tf.keras.layers.LSTM(128, activation='relu')(model)
             model = tf.keras.layers.Dropout(0.2)(model)
             model = tf.keras.layers.Dense(64, activation="relu")(model)
             output = tf.keras.layers.Dense(units=1, activation="sigmoid", name="is_relevant")(model)

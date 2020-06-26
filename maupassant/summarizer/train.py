@@ -207,7 +207,7 @@ if __name__ == '__main__':
     val_df = shuffle(pd.read_csv(val_path, nrows=100000))
 
     train = Trainer(
-        train_df, test_df, val_df, architecture="CNN_LSTM", feature="sentences", label="is_relevant", text="text",
+        train_df, test_df, val_df, architecture="CNN_LSTM", feature="sentences", label="is_relevant", text=None,
         epochs=2, batch_size=1024, buffer_size=1024
     )
     model_path = train.main()

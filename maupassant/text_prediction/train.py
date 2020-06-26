@@ -8,28 +8,18 @@ from comet_ml import Experiment
 import tensorflow as tf
 
 from maupassant.utils import timer
-from maupassant.classifier.model import TensorflowModel
-from maupassant.dataset.tensorflow import TensorflowDataset
-from maupassant.tensorflow_utils import macro_soft_f1, macro_f1
+from maupassant.text_prediction.model import TensorflowModel
+from maupassant.dataset.pandas import remove_rows_contains_null
+from maupassant.text_prediction.dataset import DatasetGenerator
 from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE, MODEL_PATH
 
 
 class TrainerHelper(TensorflowModel):
     """Tool to train model."""
 
-    def __init__(self, label_type, architecture, number_labels, embedding_type):
+    def __init__(self, label_type, architecture, number_labels, vocab_size):
         self.model = tf.keras.Sequential()
-        super().__init__(label_type, architecture, number_labels, embedding_type)
-
-    def compile_model(self):
-        if self.info['label_type'] == "binary-label":
-            self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=[macro_f1, "binary_accuracy"])
-        elif self.info['label_type'] == "multi-label":
-            self.model.compile(optimizer="adam", loss=macro_soft_f1,
-                metrics=[macro_f1, "categorical_accuracy", "top_k_categorical_accuracy"])
-        else:
-            self.model.compile(optimizer="adam", loss="sparse_categorical_crossentropy",
-                metrics=[macro_f1, "sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy"])
+        super().__init__(label_type, architecture, number_labels, vocab_size)
 
     @staticmethod
     def callback_func(checkpoint_path, tensorboard_dir=None):
@@ -66,7 +56,7 @@ class TrainerHelper(TensorflowModel):
 
     @staticmethod
     def export_model(path, model):
-        tf.keras.experimental.export_saved_model(model, path)
+        model.save(path)
         print(f"Model has been exported here => {path}")
 
     @staticmethod
@@ -92,35 +82,37 @@ class TrainerHelper(TensorflowModel):
 class Trainer(TrainerHelper):
 
     def __init__(
-            self, train_df, test_df, val_df, label_type, architecture, feature, label,
-            api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE, use_comet=True, epochs=30,
-            multi_label=True, batch_size=512, buffer_size=512, embedding_type="multilingual"
-    ):
+            self, dataset, architecture, feature, lang="english", words_predict=1, use_comet=True, epochs=10,
+            api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE):
+        self.words_predict = words_predict
+        self.lang = lang
         self.epochs = epochs
-        self.label_type = label_type
+        self.label_type = "single-label"
         self.API_KEY = api_key
         self.PROJECT_NAME = project_name
         self.WORKSPACE = workspace
         self.use_comet = use_comet
-        self.label = label
         self.feature = feature
-        self.__dataset__ = TensorflowDataset(feature, label, multi_label, batch_size, buffer_size)
-        self.train_dataset, self.test_dataset, self.val_dataset = self.__dataset__.main(train_df, test_df, val_df)
-        self.label_encoder = {self.label: {"encoder": self.__dataset__.lb, "label_type": self.label_type, "id": 0}}
-        super().__init__(label_type, architecture, self.__dataset__.nb_classes, embedding_type)
+        dataset = remove_rows_contains_null(dataset, self.feature)
+        self.__dataset__ = DatasetGenerator()
+        self.train_dataset, self.test_dataset, self.val_dataset = self.__dataset__.generate(dataset[feature])
+        self.label_encoder = {
+            self.feature: {"encoder": self.__dataset__.le, "label_type": self.label_type, "id": self.words_predict}}
+        super().__init__(self.label_type, architecture, self.__dataset__.max_labels, self.__dataset__.vocab_size)
 
     def main(self):
         self.set_model()
         self.compile_model()
-        paths = self.define_paths(self.label_type, self.label)
+        paths = self.define_paths(self.label_type, self.feature)
         os.mkdir(paths['path'])
         experiment = None
 
         if self.use_comet and self.API_KEY:
             experiment = Experiment(api_key=self.API_KEY, project_name=self.PROJECT_NAME, workspace=self.WORKSPACE)
             experiment.log_dataset_hash(self.train_dataset)
-            experiment.add_tags(['tensorflow', self.label, self.architecture, self.embedding_type])
-            experiment.log_parameters(dict(enumerate(self.__dataset__.lb.classes_)))
+            experiment.add_tags(
+                ['tensorflow', self.feature, self.architecture, self.embedding_type, self.lang, "words_prediction"])
+            experiment.log_parameters(dict(enumerate(self.__dataset__.le.classes_)))
             with experiment.train():
                 history = self.fit_model(self.train_dataset, self.val_dataset, epochs=self.epochs)
         elif self.use_comet:
@@ -156,19 +148,10 @@ class Trainer(TrainerHelper):
 
 if __name__ == '__main__':
     import pandas as pd
-    from sklearn.utils import shuffle
     from maupassant.settings import DATASET_PATH
 
-    train_path = os.path.join(DATASET_PATH, "train_phrase_label2.csv")
-    test_path = os.path.join(DATASET_PATH, "test_phrase_label2.csv")
-    val_path = os.path.join(DATASET_PATH, "val_phrase_label2.csv")
+    dataset_path = os.path.join(DATASET_PATH, "french_phrase.csv")
+    dataset = pd.read_csv(dataset_path, nrows=50000)
 
-    train_df = shuffle(pd.read_csv(train_path))
-    test_df = shuffle(pd.read_csv(test_path))
-    val_df = shuffle(pd.read_csv(val_path))
-
-    train = Trainer(
-        train_df, test_df, val_df, "single-label", "CNN", "text", "label",
-        epochs=10, multi_label=False, batch_size=512, buffer_size=512
-    )
+    train = Trainer(dataset, "GRU", "agent_text", words_predict=1, epochs=3)
     model_path = train.main()
