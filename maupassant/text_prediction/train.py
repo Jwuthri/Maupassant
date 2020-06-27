@@ -58,7 +58,6 @@ class TrainerHelper(TensorflowModel):
 
     @staticmethod
     def export_model(path, model):
-        model.save(os.path.join(path, "model.h5"))
         model.save_weights(os.path.join(path, "model_weights"))
         print(f"Model has been exported here => {path}")
 
@@ -140,9 +139,8 @@ class Trainer(TrainerHelper):
         zip_model = shutil.make_archive(
             paths['path'], "zip", os.path.dirname(paths['path']), os.path.basename(paths['path'])
         )
-        breakpoint()
         if self.use_comet:
-            experiment.log_image(paths['model_plot'])
+            # experiment.log_image(paths['model_plot'])
             experiment.log_asset(zip_model)
             experiment.end()
 
@@ -154,7 +152,7 @@ if __name__ == '__main__':
     from maupassant.settings import DATASET_PATH
 
     dataset_path = os.path.join(DATASET_PATH, "french_phrase.csv")
-    dataset = pd.read_csv(dataset_path, nrows=1000)
+    dataset = pd.read_csv(dataset_path, nrows=100)
 
     train = Trainer(dataset, "GRU", "agent_text", words_predict=1, epochs=2)
     model_path = train.main()

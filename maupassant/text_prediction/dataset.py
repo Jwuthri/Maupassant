@@ -129,10 +129,10 @@ class DatasetGenerator(object):
         padded_sequences = self.sequences_to_padded_sequences(sequences)
         commons_ngrams = self.get_commons_entities(padded_sequences)
         del sequences, padded_sequences
-        _, test = train_test_split(data, test_size=0.2, random_state=42)
+        train, test = train_test_split(data, test_size=0.2, random_state=42)
         test, val = train_test_split(test, test_size=0.5, random_state=42)
         self.fit_label_encoder(data, commons_ngrams)
-        train_dataset = self.to_tensorflow_dataset(data, commons_ngrams)
+        train_dataset = self.to_tensorflow_dataset(train, commons_ngrams)
         val_dataset = self.to_tensorflow_dataset(val, commons_ngrams)
         test_dataset = self.to_tensorflow_dataset(test, commons_ngrams)
 
