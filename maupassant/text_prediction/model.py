@@ -1,7 +1,5 @@
 import tensorflow as tf
 
-from maupassant.tensorflow_utils import macro_f1
-
 
 class TensorflowModel(object):
 
@@ -10,6 +8,7 @@ class TensorflowModel(object):
         self.architecture = architecture
         self.number_labels = number_labels
         self.vocab_size = vocab_size
+        self.embedding_size = 128
         self.embedding_type = "basic"
         self.model = tf.keras.Sequential()
         self.info = {
@@ -17,7 +16,7 @@ class TensorflowModel(object):
             "number_labels": self.number_labels, "embedding_type": self.embedding_type
         }
 
-    def set_model(self):
+    def set_model_api(self):
         input_layer = tf.keras.Input((128), name="input_layer")
         layer = tf.keras.layers.Embedding(self.vocab_size, 128)(input_layer)
         if self.architecture == "CNN_GRU":
@@ -39,7 +38,16 @@ class TensorflowModel(object):
         layer = tf.keras.layers.Dense(units=self.number_labels, activation="softmax")(layer)
         self.model = tf.keras.models.Model(inputs=input_layer, outputs=layer)
 
+    def set_model(self):
+        self.model = tf.keras.models.Sequential()
+        self.model.add(tf.keras.layers.Embedding(self.vocab_size, self.embedding_size, input_length=self.embedding_size))
+        if self.architecture == "LSTM":
+            self.model.add(tf.keras.layers.LSTM(256))
+        elif self.architecture == "GRU":
+            self.model.add(tf.keras.layers.GRU(256))
+        self.model.add(tf.keras.layers.Dense(units=self.number_labels, activation='softmax'))
+
     def compile_model(self):
         self.model.compile(
             optimizer="adam", loss="sparse_categorical_crossentropy",
-            metrics=[macro_f1, "sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy", "accuracy"])
+            metrics=["sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy"])

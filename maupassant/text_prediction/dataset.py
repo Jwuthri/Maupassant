@@ -92,12 +92,18 @@ class DatasetGenerator(object):
 
         return [ast.literal_eval(common[0]) for common in commons_ngrams]
 
+    def fit_label_encoder(self, data, commons_ngrams):
+        filtered_sequences = self.create_sequences(data, commons_ngrams=commons_ngrams)
+        filtered_padded_sequences = self.sequences_to_padded_sequences(filtered_sequences)
+        y = filtered_padded_sequences[:, -self.words_to_predict:]
+        y_encoded = [str(list(i)) for i in y]
+        self.le.fit(y_encoded)
+
     def get_x_y(self, filtered_padded_sequences, max_size=-1):
         filtered_padded_sequences = filtered_padded_sequences[:max_size]
         x = filtered_padded_sequences[:, :-self.words_to_predict]
         y = filtered_padded_sequences[:, -self.words_to_predict:]
         y_encoded = [str(list(i)) for i in y]
-        self.le.fit(y_encoded)
         y_encoded = self.le.transform(y_encoded)
 
         return x, y_encoded
@@ -110,7 +116,6 @@ class DatasetGenerator(object):
         dataset = tf.data.Dataset.from_tensor_slices((x, y))
         if is_training:
             dataset = dataset.cache()
-            # dataset = dataset.shuffle(buffer_size=self.buffer_size)
         dataset = dataset.batch(self.batch_size)
         dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
@@ -126,6 +131,7 @@ class DatasetGenerator(object):
         del sequences, padded_sequences
         _, test = train_test_split(data, test_size=0.2, random_state=42)
         test, val = train_test_split(test, test_size=0.5, random_state=42)
+        self.fit_label_encoder(data, commons_ngrams)
         train_dataset = self.to_tensorflow_dataset(data, commons_ngrams)
         val_dataset = self.to_tensorflow_dataset(val, commons_ngrams)
         test_dataset = self.to_tensorflow_dataset(test, commons_ngrams)

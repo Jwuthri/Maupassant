@@ -25,7 +25,7 @@ class TrainerHelper(TensorflowModel):
 
     @staticmethod
     def callback_func(checkpoint_path, tensorboard_dir=None):
-        checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, verbose=1, period=5)
+        checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, verbose=1, period=2)
         if tensorboard_dir:
             tensorboard = tf.keras.callbacks.TensorBoard(log_dir=tensorboard_dir, histogram_freq=1)
             return [tensorboard, checkpoint]
@@ -127,8 +127,8 @@ class Trainer(TrainerHelper):
             history = self.fit_model(self.train_dataset, self.val_dataset, epochs=self.epochs, callbacks=callbacks)
         loss = history.history["loss"]
         val_loss = history.history["val_loss"]
-        macro_f1 = history.history["macro_f1"]
-        val_macro_f1 = history.history["val_macro_f1"]
+        macro_f1 = history.history["sparse_categorical_accuracy"]
+        val_macro_f1 = history.history["sparse_categorical_accuracy"]
         metrics = {"loss": loss, "val_loss": val_loss, "macro_f1": macro_f1, "val_macro_f1": val_macro_f1}
         metrics = {metric: [round(float(value), 5) for value in values] for metric, values in metrics.items()}
 
@@ -140,7 +140,7 @@ class Trainer(TrainerHelper):
         zip_model = shutil.make_archive(
             paths['path'], "zip", os.path.dirname(paths['path']), os.path.basename(paths['path'])
         )
-
+        breakpoint()
         if self.use_comet:
             experiment.log_image(paths['model_plot'])
             experiment.log_asset(zip_model)
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     from maupassant.settings import DATASET_PATH
 
     dataset_path = os.path.join(DATASET_PATH, "french_phrase.csv")
-    dataset = pd.read_csv(dataset_path, nrows=50000)
+    dataset = pd.read_csv(dataset_path, nrows=1000)
 
-    train = Trainer(dataset, "GRU", "agent_text", words_predict=1, epochs=3)
+    train = Trainer(dataset, "GRU", "agent_text", words_predict=1, epochs=2)
     model_path = train.main()
