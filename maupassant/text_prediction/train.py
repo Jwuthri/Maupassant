@@ -116,14 +116,17 @@ class Trainer(TrainerHelper):
                 ['tensorflow', self.feature, self.architecture, self.embedding_type, self.lang, "words_prediction"])
             experiment.log_parameters(dict(enumerate(self.__dataset__.le.classes_)))
             with experiment.train():
-                history = self.fit_model(self.train_dataset, self.val_dataset, epochs=self.epochs)
+                history = self.model.fit(
+                    self.train_dataset[0], self.train_dataset[1], validation_data=self.val_dataset, epochs=self.epochs)
         elif self.use_comet:
             raise Exception("Please provide an api_key, project_name and workspace for comet_ml")
         else:
             callbacks = self.callback_func(
                 tensorboard_dir=paths['tensorboard_path'], checkpoint_path=paths['checkpoint_path']
             )
-            history = self.fit_model(self.train_dataset, self.val_dataset, epochs=self.epochs, callbacks=callbacks)
+            history = self.model.fit(
+                self.train_dataset[0], self.train_dataset[1],
+                validation_data=self.val_dataset, epochs=self.epochs, callbacks=callbacks)
         loss = history.history["loss"]
         val_loss = history.history["val_loss"]
         macro_f1 = history.history["sparse_categorical_accuracy"]
