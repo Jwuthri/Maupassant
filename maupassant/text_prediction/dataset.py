@@ -57,8 +57,8 @@ class DatasetGenerator(object):
 
     def set_tokenizer(self, text):
         self.tokenizer.fit_on_texts([text])
+        # self.clean_tokenizer()
         self.vocab_size = len(self.tokenizer.word_index) + 1
-        self.clean_tokenizer()
 
     def create_sequences(self, dataset, commons_ngrams=None):
         sequences = list()

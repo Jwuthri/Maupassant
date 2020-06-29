@@ -6,6 +6,7 @@ WORKDIR /maupassant/src
 COPY requirements.txt setup.py ./
 COPY maupassant ./maupassant/
 
+RUN apt-get install graphviz
 RUN pip install -r requirements.txt
 RUN pip install jupyterlab
 RUN python -m nltk.downloader punkt
