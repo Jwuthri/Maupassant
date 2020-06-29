@@ -140,7 +140,7 @@ class DatasetGenerator(object):
         train, test = train_test_split(data, test_size=0.2, random_state=42)
         test, val = train_test_split(test, test_size=0.5, random_state=42)
         self.fit_label_encoder(data, commons_ngrams)
-        train_dataset = self.to_dataset(train, commons_ngrams)
+        train_dataset = self.to_dataset(data, commons_ngrams)
         val_dataset = self.to_dataset(val, commons_ngrams)
         test_dataset = self.to_dataset(test, commons_ngrams)
 

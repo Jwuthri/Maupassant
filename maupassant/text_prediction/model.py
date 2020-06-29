@@ -41,7 +41,7 @@ class TensorflowModel(object):
 
     def set_model(self):
         self.model = tf.keras.models.Sequential()
-        self.model.add(tf.keras.layers.Embedding(self.vocab_size, self.embedding_size, input_length=self.embedding_size))
+        self.model.add(tf.keras.layers.Embedding(self.vocab_size, self.embedding_size))
         if self.architecture == "LSTM":
             self.model.add(tf.keras.layers.LSTM(256))
         elif self.architecture == "GRU":

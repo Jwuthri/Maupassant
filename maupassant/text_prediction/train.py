@@ -90,8 +90,8 @@ class TrainerHelper(TensorflowModel):
 class Trainer(TrainerHelper):
 
     def __init__(
-            self, dataset, architecture, feature, lang="english", words_predict=1, use_comet=True, epochs=10,
-            batch_size=32, api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE):
+            self, dataset, architecture, feature, lang="english", words_predict=1, use_comet=False, epochs=10,
+            batch_size=64, api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE):
         self.words_predict = words_predict
         self.lang = lang
         self.epochs = epochs
@@ -148,14 +148,14 @@ class Trainer(TrainerHelper):
 
         self.export_model(paths['model_path'], self.model)
         self.export_encoder(paths['path'], self.label_encoder)
-        self.export_model_plot(paths['model_plot'], self.model)
+        # self.export_model_plot(paths['model_plot'], self.model)
         self.export_info(paths["model_info"], self.info)
         self.export_metrics(paths["metrics_path"], metrics)
         zip_model = shutil.make_archive(
             paths['path'], "zip", os.path.dirname(paths['path']), os.path.basename(paths['path'])
         )
         if self.use_comet:
-            experiment.log_image(paths['model_plot'])
+            # experiment.log_image(paths['model_plot'])
             experiment.log_asset(zip_model)
             experiment.end()
 
@@ -178,7 +178,7 @@ def train(dataset, architecture, feature, max_words_pred, epochs):
             train = Trainer(dataset, architecture, feature, words_predict=word_predict, epochs=epochs)
             model, le, _ = train.main(embedding)
             dict_models[word_predict] = model
-            dict_le[1] = le
+            dict_le[word_predict] = le
 
     input_layer = tf.keras.Input((), name="input_layer")
     embedding_layer = embedding(input_layer)
@@ -200,6 +200,10 @@ def train(dataset, architecture, feature, max_words_pred, epochs):
     TrainerHelper.export_pickle(paths['path'], dict_le, 'encoder')
     TrainerHelper.export_pickle(paths['path'], tokenizer, 'tokenizer')
     TrainerHelper.export_info(paths["model_info"], info)
+    final_model.save('toto.h5')
+    TrainerHelper.export_pickle("", dict_le, 'encoder')
+    TrainerHelper.export_pickle("", tokenizer, 'tokenizer')
+
 
     return final_model
 
@@ -207,13 +211,22 @@ def train(dataset, architecture, feature, max_words_pred, epochs):
 if __name__ == '__main__':
     import pandas as pd
     import numpy as np
+    import time
     from maupassant.settings import DATASET_PATH
 
     dataset_path = os.path.join(DATASET_PATH, "french_phrase.csv")
     dataset = pd.read_csv(dataset_path, nrows=100)
-    final_model = train(dataset, "LSTM", 'agent_text', 2, 2)
-    # x = np.asarray([0] * 127 + [24])
-    # preds = final_model.predict(x)
+    # final_model = train(dataset, "LSTM", 'agent_text', 2, 2)
+    #
+    loaded_model = tf.keras.models.load_model('toto.h5')
+    loaded_model.build(tf.TensorShape([1, None]))
+    x = np.asarray([0] * 127 + [24])
+    preds = loaded_model.predict(x)
+    t0 = time.time()
+    preds = loaded_model.predict(x)
+    t1 = time.time()
+    print(t1-t0)
+    print(preds)
     # for k, v in models_word_to_predict.items():
     #     k = k - 1
     #     le = v['label_encoder']
