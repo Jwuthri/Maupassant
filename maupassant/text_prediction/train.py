@@ -14,8 +14,6 @@ from maupassant.dataset.pandas import remove_rows_contains_null
 from maupassant.text_prediction.dataset import DatasetGenerator
 from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE, MODEL_PATH
 
-tf.compat.v1.disable_eager_execution()
-
 
 class TrainerHelper(TensorflowModel):
     """Tool to train model."""
@@ -90,9 +88,8 @@ class TrainerHelper(TensorflowModel):
 class Trainer(TrainerHelper):
 
     def __init__(
-            self, dataset, architecture, feature, lang="english", words_predict=1, use_comet=False, epochs=10,
+            self, dataset, architecture, feature, lang="english", use_comet=False, epochs=10,
             batch_size=64, api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE):
-        self.words_predict = words_predict
         self.lang = lang
         self.epochs = epochs
         self.label_type = "single-label"
@@ -101,17 +98,12 @@ class Trainer(TrainerHelper):
         self.WORKSPACE = workspace
         self.use_comet = use_comet
         self.feature = feature
-        self.__dataset__ = DatasetGenerator(batch_size=batch_size, words_to_predict=words_predict)
+        self.__dataset__ = DatasetGenerator(batch_size=batch_size)
         self.train_dataset, self.test_dataset, self.val_dataset = self.__dataset__.generate(dataset[feature])
-        self.label_encoder = {
-            self.feature: {"encoder": self.__dataset__.le, "label_type": self.label_type, "id": self.words_predict}}
         super().__init__(self.label_type, architecture, self.__dataset__.max_labels, self.__dataset__.vocab_size)
 
-    def main(self, pretrained_embedding=None):
-        if pretrained_embedding:
-            self.set_model_api(pretrained_embedding)
-        else:
-            self.set_model()
+    def main(self):
+        self.set_model()
         self.compile_model()
         paths = self.define_paths(self.label_type, self.feature)
         os.mkdir(paths['path'])
@@ -121,10 +113,7 @@ class Trainer(TrainerHelper):
             experiment = Experiment(api_key=self.API_KEY, project_name=self.PROJECT_NAME, workspace=self.WORKSPACE)
             experiment.log_dataset_hash(self.train_dataset)
             experiment.add_tags(
-                [
-                    'tensorflow', self.feature, self.architecture, self.embedding_type,
-                    self.lang, "words_prediction", self.words_predict
-                ]
+                ['tensorflow', self.feature, self.architecture, self.embedding_type, self.lang, "words_prediction"]
             )
             experiment.log_parameters(dict(enumerate(self.__dataset__.le.classes_)))
             with experiment.train():

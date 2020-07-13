@@ -9,6 +9,8 @@ import tensorflow as tf
 from maupassant.utils import timer
 from maupassant.utils import predict_format
 
+tf.compat.v1.disable_eager_execution()
+
 
 class Predictor(object):
 
