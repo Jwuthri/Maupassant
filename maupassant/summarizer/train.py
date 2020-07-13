@@ -202,9 +202,9 @@ if __name__ == '__main__':
     test_path = os.path.join(DATASET_PATH, "one_to_one", "val_summarization.csv")
     val_path = os.path.join(DATASET_PATH, "one_to_one", "val_summarization.csv")
 
-    train_df = shuffle(pd.read_csv(train_path, nrows=800000))
+    train_df = shuffle(pd.read_csv(train_path))
     test_df = shuffle(pd.read_csv(test_path))
-    val_df = shuffle(pd.read_csv(val_path, nrows=100000))
+    val_df = shuffle(pd.read_csv(val_path))
 
     train = Trainer(
         train_df, test_df, val_df, architecture="CNN_LSTM", feature="sentences", label="is_relevant", text=None,

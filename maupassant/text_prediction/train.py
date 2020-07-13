@@ -1,5 +1,4 @@
 import os
-import ast
 import json
 import pickle
 import shutil
@@ -57,7 +56,7 @@ class TrainerHelper(TensorflowModel):
 
     @staticmethod
     def export_model(path, model):
-        model.save_weights(os.path.join(path, "model_weights"))
+        model.save(os.path.join(path, "model.h5"))
         print(f"Model has been exported here => {path}")
 
     @staticmethod
@@ -115,10 +114,9 @@ class Trainer(TrainerHelper):
             experiment.add_tags(
                 ['tensorflow', self.feature, self.architecture, self.embedding_type, self.lang, "words_prediction"]
             )
-            experiment.log_parameters(dict(enumerate(self.__dataset__.le.classes_)))
             with experiment.train():
                 history = self.model.fit(
-                    self.train_dataset[0], self.train_dataset[1], validation_data=self.val_dataset, epochs=self.epochs)
+                    self.train_dataset, validation_data=self.val_dataset, epochs=self.epochs)
         elif self.use_comet:
             raise Exception("Please provide an api_key, project_name and workspace for comet_ml")
         else:
@@ -126,105 +124,34 @@ class Trainer(TrainerHelper):
                 tensorboard_dir=paths['tensorboard_path'], checkpoint_path=paths['checkpoint_path']
             )
             history = self.model.fit(
-                self.train_dataset[0], self.train_dataset[1],
-                validation_data=self.val_dataset, epochs=self.epochs, callbacks=callbacks)
+                self.train_dataset, validation_data=self.val_dataset, epochs=self.epochs, callbacks=callbacks)
         loss = history.history["loss"]
         val_loss = history.history["val_loss"]
         macro_f1 = history.history["sparse_categorical_accuracy"]
         val_macro_f1 = history.history["sparse_categorical_accuracy"]
-        metrics = {"loss": loss, "val_loss": val_loss, "macro_f1": macro_f1, "val_macro_f1": val_macro_f1}
+        metrics = {"loss": loss, "val_loss": val_loss, "accuracy": macro_f1, "val_accuracy": val_macro_f1}
         metrics = {metric: [round(float(value), 5) for value in values] for metric, values in metrics.items()}
 
         self.export_model(paths['model_path'], self.model)
-        self.export_encoder(paths['path'], self.label_encoder)
-        # self.export_model_plot(paths['model_plot'], self.model)
         self.export_info(paths["model_info"], self.info)
         self.export_metrics(paths["metrics_path"], metrics)
+        self.export_pickle(paths['path'], self.__dataset__.tokenizer, 'tokenizer')
         zip_model = shutil.make_archive(
             paths['path'], "zip", os.path.dirname(paths['path']), os.path.basename(paths['path'])
         )
         if self.use_comet:
-            # experiment.log_image(paths['model_plot'])
             experiment.log_asset(zip_model)
             experiment.end()
 
-        return self.model, self.__dataset__.le, self.__dataset__.tokenizer
-
-
-def train(dataset, architecture, feature, max_words_pred, epochs):
-    dict_models = {}
-    dict_le = {}
-    max_words_pred = min(5, max_words_pred)
-    dataset = remove_rows_contains_null(dataset, feature)
-    train = Trainer(dataset, architecture, feature, words_predict=1, epochs=epochs)
-    model, le, tokenizer = train.main()
-    dict_models[1] = model
-    dict_le[1] = le
-    embedding = model.layers[0]
-    embedding.trainable = False
-    if max_words_pred > 1:
-        for word_predict in range(2, max_words_pred + 1):
-            train = Trainer(dataset, architecture, feature, words_predict=word_predict, epochs=epochs)
-            model, le, _ = train.main(embedding)
-            dict_models[word_predict] = model
-            dict_le[word_predict] = le
-
-    input_layer = tf.keras.Input((), name="input_layer")
-    embedding_layer = embedding(input_layer)
-    embedding_layer = tf.keras.layers.Reshape(target_shape=(1, 128))(embedding_layer)
-    outputs = []
-    for k, v in dict_models.items():
-        layers = v.layers
-        start = 1 if k == 1 else 2
-        layer = layers[start](embedding_layer)
-        for layer_ in layers[start + 1:]:
-            layer = layer_(layer)
-        outputs.append(layer)
-    final_model = tf.keras.models.Model(inputs=input_layer, outputs=outputs)
-    info = {
-        "label_type": "single-label", "architecture": architecture, "vocab_size": len(tokenizer.word_index) + 1
-    }
-    paths = TrainerHelper.define_paths("single-label", feature)
-    TrainerHelper.export_model(paths['model_path'], final_model)
-    TrainerHelper.export_pickle(paths['path'], dict_le, 'encoder')
-    TrainerHelper.export_pickle(paths['path'], tokenizer, 'tokenizer')
-    TrainerHelper.export_info(paths["model_info"], info)
-    final_model.save('toto.h5')
-    TrainerHelper.export_pickle("", dict_le, 'encoder')
-    TrainerHelper.export_pickle("", tokenizer, 'tokenizer')
-
-
-    return final_model
+        return self.model, self.__dataset__.tokenizer
 
 
 if __name__ == '__main__':
     import pandas as pd
-    import numpy as np
-    import time
     from maupassant.settings import DATASET_PATH
 
-    dataset_path = os.path.join(DATASET_PATH, "french_phrase.csv")
-    dataset = pd.read_csv(dataset_path, nrows=100)
-    # final_model = train(dataset, "LSTM", 'agent_text', 2, 2)
-    #
-    loaded_model = tf.keras.models.load_model('toto.h5')
-    loaded_model.build(tf.TensorShape([1, None]))
-    x = np.asarray([0] * 127 + [24])
-    preds = loaded_model.predict(x)
-    t0 = time.time()
-    preds = loaded_model.predict(x)
-    t1 = time.time()
-    print(t1-t0)
-    print(preds)
-    # for k, v in models_word_to_predict.items():
-    #     k = k - 1
-    #     le = v['label_encoder']
-    #     tok = v['tokenizer']
-    #     pred = preds[k][-1]
-    #     best = np.argmax(pred)
-    #     inv = le.inverse_transform([best])
-    #     print(inv)
-    #     print(inv[0])
-    #     vals = ast.literal_eval(inv[0])
-    #     for val in vals:
-    #         print(tok.index_word[val])
+    dataset_path = os.path.join(DATASET_PATH, "french_phrase_300k.csv")
+    dataset = pd.read_csv(dataset_path)
+    dataset = remove_rows_contains_null(dataset, "cleaned_agent")
+    trainer = Trainer(dataset, "RNN", "cleaned_agent", epochs=5, use_comet=True, lang='fr')
+    final_model = trainer.main()

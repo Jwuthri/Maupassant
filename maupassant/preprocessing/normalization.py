@@ -1,6 +1,6 @@
 import re
 import emot
-import contractions
+# import contractions
 
 from autocorrect import Speller
 
@@ -48,6 +48,8 @@ class TextNormalization:
     @staticmethod
     def text_demojis(text, how_replace=""):
         emojis = emot.emoji(text)
+        if isinstance(emojis, list):
+            emojis = emojis[0]
         if emojis['flag']:
             for index in range(len(emojis["value"])):
                 if how_replace == 'mean':
@@ -62,6 +64,8 @@ class TextNormalization:
     @staticmethod
     def text_demoticons(text, how_replace=""):
         emoticons = emot.emoticons(text)
+        if isinstance(emoticons, list):
+            emoticons = emoticons[0]
         if emoticons['flag']:
             for index in range(len(emoticons["value"])):
                 if how_replace == 'mean':
@@ -72,10 +76,10 @@ class TextNormalization:
                     text = text.replace(emoticons['value'][index], "")
 
         return text
-
-    @staticmethod
-    def text_decontraction(text):
-        return contractions.fix(text)
+    #
+    # @staticmethod
+    # def text_decontraction(text):
+    #     return contractions.fix(text)
 
     @staticmethod
     def spec_add_spaces(text):

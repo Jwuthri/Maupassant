@@ -8,6 +8,7 @@ class TensorflowModel(object):
         self.architecture = architecture
         self.number_labels = number_labels
         self.vocab_size = vocab_size
+        self.input_size = 64
         self.embedding_size = 128
         self.embedding_type = "basic"
         self.model = tf.keras.Sequential()
@@ -17,7 +18,7 @@ class TensorflowModel(object):
         }
 
     def set_model(self):
-        input = tf.keras.Input((64), name="input_layer")
+        input = tf.keras.Input((self.input_size), name="input_layer")
         embedding = tf.keras.layers.Embedding(self.vocab_size, self.embedding_size)(input)
         if self.architecture == "LSTM":
             rnn = tf.keras.layers.LSTM(256, activation='relu')(embedding)

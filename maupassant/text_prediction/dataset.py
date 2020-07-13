@@ -2,7 +2,6 @@ import re
 import tqdm
 
 from sklearn.model_selection import train_test_split
-from sklearn import preprocessing
 import numpy as np
 
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -23,8 +22,8 @@ class DatasetGenerator(object):
         self.tokenizer = Tokenizer(filters='', num_words=20000, oov_token='[UNK]')
         self.vocab_size = 0
         self.splitter = "|".join([
-            "!", "@", "#", "$", "%", "^", "&", '*', "(", ")", "_", "-", ",", "<", ".", ">", "?", "`", "~", ":", ";"
-            "+", "=", "[", "]", "{", "}", "\n{1,2,}", "\\s"
+            "!", "@", "#", "$", "%", "^",  "&",  "\\(", "\\)", "_",  "-",  ",", "<", "\\.", ">", "\\?", "`", "~", ":",
+            ";","\\+", "=", "[", "]", "{", "}", "\n{2,}", "\\s", "\n"
         ])
 
     def split_text(self, text):
@@ -39,13 +38,14 @@ class DatasetGenerator(object):
     def clean_dataset(self, data):
         pbar = tqdm.tqdm(total=len(data))
         cleaned_texts = []
+        tn = TextNormalization()
         for text in data.values:
             text = self.split_text(text)
-            text = TextNormalization.replace_char_rep(text)
-            text = TextNormalization.replace_words_rep(text)
-            text = TextNormalization.text_demojis(text)
-            text = TextNormalization.text_demoticons(text)
-            text = TextNormalization.remove_multiple_spaces(text)
+            text = tn.replace_char_rep(text=text)
+            text = tn.replace_words_rep(text=text)
+            text = tn.text_demojis(text=text)
+            text = tn.text_demoticons(text=text)
+            text = tn.remove_multiple_spaces(text=text)
             text = text.strip()
             cleaned_texts.append(text)
             pbar.update(1)
@@ -69,7 +69,7 @@ class DatasetGenerator(object):
         for text in cleaned_data:
             encoded_text = self.tokenizer.texts_to_sequences([text])[0]
             for idx in range(1, len(encoded_text) - 1):
-                if encoded_text[idx:idx+1] in labels:
+                if encoded_text[idx:idx+1][0] in labels:
                     texts_to_sequences.append(encoded_text[:idx+1])
             pbar.update(1)
         pbar.close()
@@ -78,7 +78,7 @@ class DatasetGenerator(object):
 
     def create_dataset(self, data, labels):
         texts_to_sequences = self.texts_to_sequences(data, labels)
-        padded_sequences = np.array(pad_sequences(texts_to_sequences, maxlen=self.input_shape, padding='pre'))
+        padded_sequences = np.array(pad_sequences(texts_to_sequences, maxlen=self.input_shape + 1, padding='pre'))
         x, y = padded_sequences[:, :-1], padded_sequences[:, -1:]
         dataset = self.to_tensorflow_dataset(x, y)
 
