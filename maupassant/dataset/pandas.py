@@ -22,7 +22,7 @@ def compare_data_frame(df1, df2, column):
     return df1[~df1[column].isin(df2[column])]
 
 
-def count_frequency(df, col, column_name="Freq"):
+def count_frequency(df, col, column_name="Frequency"):
     df[column_name] = df.groupby(col)[col].transform('count')
 
     return df
@@ -34,3 +34,7 @@ def change_nan_value(df, new_value):
 
 def extract_json(serie, k):
     return serie.map(lambda row: json.loads(row)[k])
+
+
+def categories_frequency(df, col):
+    return df[col].value_counts()

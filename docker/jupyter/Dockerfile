@@ -10,7 +10,7 @@ RUN pip3 install tensorflow-gpu
 RUN pip3 install numpy pandas sklearn matplotlib seaborn jupyter
 
 RUN ["mkdir", "notebooks"]
-COPY jupyter_notebook_config.py /root/.jupyter/
+# COPY jupyter_notebook_config.py /root/.jupyter/
 COPY run_jupyter.sh /
 
 # Jupyter and Tensorboard ports
