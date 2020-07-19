@@ -30,7 +30,7 @@ It can help you in differents ways:
     * Text Question Answer
 
 ##### Dependencies
-```
+```bash
 - Python (>= 3.6)
 - Tensorflow (>= 2.0.1)
 - Nltk (>= 3.4.5)
@@ -42,10 +42,16 @@ With pypi:
 ```pip install maupassant```
 
 Custom installation:
-```
+```bash
 git clone git@github.com:Jwuthri/Maupassant.git
 cd maupassant
 pip install -e .
+```
+
+Using docker:
+```bash
+docker-compose build
+docker-compose run
 ```
 
 Processing

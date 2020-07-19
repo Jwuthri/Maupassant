@@ -5,7 +5,7 @@ services:
     env_file: .env
     build:
       context: .
-      dockerfile: app/task/Dockerfile
+      dockerfile: docker/task/Dockerfile
     volumes:
       - .:/maupassant/src
     restart: always
@@ -13,7 +13,7 @@ services:
   streamlit:
     build:
       context: .
-      dockerfile: app/streamlit/Dockerfile
+      dockerfile: docker/streamlit/Dockerfile
     command: "streamlit run maupassant/stream_app/app.py"
     ports:
       - "8501:8501"
@@ -24,7 +24,7 @@ services:
   notebook:
     build:
       context: .
-      dockerfile: app/notebook/Dockerfile
+      dockerfile: docker/jupyterlab/Dockerfile
     command: "jupyter lab --ip=0.0.0.0 --allow-root"
     ports:
       - "8888:8888"
