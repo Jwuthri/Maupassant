@@ -1,6 +1,6 @@
 import re
 import emot
-# import contractions
+import contractions
 
 from autocorrect import Speller
 
@@ -76,10 +76,10 @@ class TextNormalization:
                     text = text.replace(emoticons['value'][index], "")
 
         return text
-    #
-    # @staticmethod
-    # def text_decontraction(text):
-    #     return contractions.fix(text)
+
+    @staticmethod
+    def text_decontraction(text):
+        return contractions.fix(text)
 
     @staticmethod
     def spec_add_spaces(text):
