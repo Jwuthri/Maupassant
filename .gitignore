@@ -2,6 +2,10 @@
 .idea/
 .spyproject/
 
+# Do not ignore
+!*models/README.md
+
+
 # Build
 __pycache__
 .ipynb_checkpoints
