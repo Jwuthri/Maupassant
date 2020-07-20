@@ -44,13 +44,3 @@ def hamming_score(y_true, y_pred):
         acc_list.append(tmp_a)
 
     return np.mean(acc_list)
-
-
-def learning_curves(history):
-    """Plot the learning curves of loss and macro f1 score"""
-    loss = history.history["loss"]
-    val_loss = history.history["val_loss"]
-    macro_f1 = history.history["macro_f1"]
-    val_macro_f1 = history.history["val_macro_f1"]
-
-    return loss, val_loss, macro_f1, val_macro_f1

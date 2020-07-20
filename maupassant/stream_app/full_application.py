@@ -5,7 +5,7 @@ import plotly.express as px
 from sklearn.model_selection import train_test_split
 
 from maupassant.feature_decomposition.dimension_reduction import Decomposition
-from maupassant.feature_extraction.embedding import Embedding
+from maupassant.feature_extraction.pretrainedembedding import PretrainedEmbedding
 from maupassant.feature_extraction.tfidf import Tfidf
 from maupassant.dataset.pandas import remove_rows_contains_null
 
@@ -14,7 +14,7 @@ class TextApplication(object):
 
     def __init__(self):
         self.models = ["", "LDA", "PCA", "SVD", "SPCA", "UMAP"]
-        self.embedding = Embedding()
+        self.embedding = PretrainedEmbedding()
         self.max_len = 10000
 
     def create_feature(self, data, feature):

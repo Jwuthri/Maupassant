@@ -10,7 +10,7 @@ import tensorflow as tf
 from maupassant.utils import timer
 from maupassant.classifier.model import TensorflowModel
 from maupassant.dataset.tensorflow import TensorflowDataset
-from maupassant.tensorflow_utils import macro_soft_f1, macro_f1
+from maupassant.tensorflow_metric_loss_optimizer import macro_soft_f1, macro_f1
 from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE, MODEL_PATH
 
 

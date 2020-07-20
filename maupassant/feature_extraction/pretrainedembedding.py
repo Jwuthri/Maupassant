@@ -5,15 +5,15 @@ import tensorflow_hub as hub
 from maupassant.utils import predict_format
 
 
-class Embedding(object):
+class PretrainedEmbedding(object):
 
-    def __init__(self, model_type='multilingual', name="KerasLayer"):
+    def __init__(self, model_type='multilingual', name="embedding_layer"):
         self.name = name
         self.model_type = model_type.lower()
         self.model = self.init_model()
 
     def init_model(self):
-        assert self.model_type in ["multilingual", "multilingual-qa", "english"]
+        assert self.model_type in ["multilingual", "multilingual-qa", "universal-encoder"]
         module_mapping = {
             "multilingual": "https://tfhub.dev/google/universal-sentence-encoder-multilingual/3",
             "multilingual-qa": "https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/3",

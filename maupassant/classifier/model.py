@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from maupassant.feature_extraction.embedding import Embedding
+from maupassant.feature_extraction.pretrainedembedding import PretrainedEmbedding
 
 
 class TensorflowModel(object):
@@ -27,7 +27,7 @@ class TensorflowModel(object):
         return output
 
     def set_model(self):
-        embed_module = Embedding(model_type=self.embedding_type)
+        embed_module = PretrainedEmbedding(model_type=self.embedding_type)
         input_layer = tf.keras.Input((), dtype=tf.string, name="input_layer")
         layer = embed_module.model(input_layer)
         layer = tf.keras.layers.Reshape(target_shape=(1, 512))(layer)

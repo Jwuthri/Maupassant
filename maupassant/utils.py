@@ -1,7 +1,15 @@
+import os
+import json
 import time
+import pickle
+import datetime
 import functools
 
 import numpy as np
+
+import tensorflow as tf
+
+from maupassant.settings import MODEL_PATH
 
 
 def text_format(txt_color='white', txt_style='normal', bg_color=None, end=False):
@@ -63,3 +71,52 @@ def predict_format(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+class GeneratePath(object):
+
+    def __init__(self, base_path=MODEL_PATH, name="classifier"):
+        self.base_path = base_path
+        self.name = name
+        self.date = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        self.paths = self.define_paths()
+
+    def define_paths(self):
+        base_dir = os.path.join(self.base_path, f"{self.date}_{self.name}")
+
+        return {
+            "path": base_dir,
+            "model_path": os.path.join(base_dir, 'model'),
+            "model_plot_path":  os.path.join(base_dir, "model.jpg"),
+            "model_info_path": os.path.join(base_dir, "model.json"),
+            "metrics_path": os.path.join(base_dir, "metrics.json"),
+            "label_encoder_path": os.path.join(base_dir, "label_encoder.pkl"),
+            "tokenizer_path": os.path.join(base_dir, "tokenizer.pkl"),
+            "tensorboard_path": os.path.join(base_dir, "tensorboard"),
+            "checkpoint_path": os.path.join(base_dir, "checkpoint"),
+        }
+
+    def export_model_plot(self, model):
+        tf.keras.utils.plot_model(model, to_file=self.paths['model_plot_path'], show_shapes=True)
+
+    def export_model(self, model):
+        model.save_weights(self.paths['model_path'])
+        print(f"Model has been exported here => {self.paths['model_path']}")
+
+    def export_encoder(self, label_encoder):
+        pickle.dump(label_encoder, open(self.paths['label_encoder_path'], "wb"))
+        print(f"Label Encoder has been exported here => {self.paths['label_encoder_path']}")
+
+    def export_info(self, info):
+        with open(self.paths['model_info_path'], 'w') as outfile:
+            json.dump(info, outfile)
+            print(f"Model information have been exported here => {self.paths['model_info_path']}")
+
+    def export_metrics(self, metrics):
+        with open(self.paths['metrics_path'], 'w') as outfile:
+            json.dump(metrics, outfile)
+            print(f"Model metrics have been exported here => {self.paths['metrics_path']}")
+
+    def export_tokenizer(self, tokenizer):
+        pickle.dump(tokenizer, open(self.paths['tokenizer_path'], "wb"))
+        print(f"Tokenizer has been exported here => {self.paths['tokenizer_path']}")

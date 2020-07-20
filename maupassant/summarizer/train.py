@@ -8,7 +8,7 @@ from comet_ml import Experiment
 import tensorflow as tf
 
 from maupassant.utils import timer
-from maupassant.tensorflow_utils import macro_f1
+from maupassant.tensorflow_metric_loss_optimizer import macro_f1
 from maupassant.dataset.labels import LabelEncoding
 from maupassant.summarizer.model import TensorflowModel
 from maupassant.dataset.pandas import remove_rows_contains_null
