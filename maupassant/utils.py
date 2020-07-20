@@ -9,8 +9,6 @@ import numpy as np
 
 import tensorflow as tf
 
-from maupassant.settings import MODEL_PATH
-
 
 def text_format(txt_color='white', txt_style='normal', bg_color=None, end=False):
     color = {
@@ -73,20 +71,24 @@ def predict_format(func):
     return wrapper
 
 
-class GeneratePath(object):
+class ModelSaverLoader(object):
 
-    def __init__(self, base_path=MODEL_PATH, name="classifier"):
+    def __init__(self, base_path, name, model_load):
         self.base_path = base_path
         self.name = name
+        self.model_load = model_load
         self.date = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         self.paths = self.define_paths()
 
     def define_paths(self):
-        base_dir = os.path.join(self.base_path, f"{self.date}_{self.name}")
+        if self.model_load:
+            base_dir = os.path.join(self.base_path, self.name)
+        else:
+            base_dir = os.path.join(self.base_path, f"{self.date}_{self.name}")
 
         return {
             "path": base_dir,
-            "model_path": os.path.join(base_dir, 'model'),
+            "model_path": os.path.join(base_dir, 'model.pkl'),
             "model_plot_path":  os.path.join(base_dir, "model.jpg"),
             "model_info_path": os.path.join(base_dir, "model.json"),
             "metrics_path": os.path.join(base_dir, "metrics.json"),
@@ -96,27 +98,64 @@ class GeneratePath(object):
             "checkpoint_path": os.path.join(base_dir, "checkpoint"),
         }
 
-    def export_model_plot(self, model):
+    def export_tf_model_plot(self, model):
         tf.keras.utils.plot_model(model, to_file=self.paths['model_plot_path'], show_shapes=True)
 
-    def export_model(self, model):
-        model.save_weights(self.paths['model_path'])
-        print(f"Model has been exported here => {self.paths['model_path']}")
+    def export_weights(self, model):
+        model.save_weights(self.paths['path'])
+        print(f"Model has been exported here => {self.paths['path']}")
+
+    def load_weights(self, model):
+        latest = tf.train.latest_checkpoint(self.paths['path'])
+        model.load_weights(latest)
+
+        return model
 
     def export_encoder(self, label_encoder):
         pickle.dump(label_encoder, open(self.paths['label_encoder_path'], "wb"))
         print(f"Label Encoder has been exported here => {self.paths['label_encoder_path']}")
+
+    def load_encoder(self):
+        encoder = pickle.load(open(self.paths['label_encoder_path'], "rb"))
+
+        return encoder
 
     def export_info(self, info):
         with open(self.paths['model_info_path'], 'w') as outfile:
             json.dump(info, outfile)
             print(f"Model information have been exported here => {self.paths['model_info_path']}")
 
+    def load_info(self):
+        with open(self.paths['model_info_path'],) as json_file:
+            info = json.load(json_file)
+
+        return info
+
     def export_metrics(self, metrics):
         with open(self.paths['metrics_path'], 'w') as outfile:
             json.dump(metrics, outfile)
             print(f"Model metrics have been exported here => {self.paths['metrics_path']}")
 
+    def load_metrics(self):
+        with open(self.paths['metrics_path'],) as json_file:
+            metrics = json.load(json_file)
+
+        return metrics
+
     def export_tokenizer(self, tokenizer):
         pickle.dump(tokenizer, open(self.paths['tokenizer_path'], "wb"))
         print(f"Tokenizer has been exported here => {self.paths['tokenizer_path']}")
+
+    def load_tokenizer(self):
+        tokenizer = pickle.load(open(self.paths['tokenizer_path'], "rb"))
+
+        return tokenizer
+
+    def export_model(self, model):
+        pickle.dump(model, open(self.paths['model_path'], "wb"))
+        print(f"Model has been exported here => {self.paths['model_path']}")
+
+    def load_model(self):
+        model = pickle.load(open(self.paths['model_path'], "rb"))
+
+        return model

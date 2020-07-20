@@ -2,11 +2,17 @@ import tensorflow as tf
 
 from maupassant.feature_extraction.pretrainedembedding import PretrainedEmbedding
 from maupassant.tensorflow_metric_loss_optimizer import macro_f1, macro_soft_f1
+from maupassant.settings import MODEL_PATH
+from maupassant.utils import ModelSaverLoader
 
 
-class BaseTensorflowModel(object):
+class BaseTensorflowModel(ModelSaverLoader):
 
-    def __init__(self, label_type: str, architecture: list, number_labels: int, embedding_type: str):
+    def __init__(self,
+             label_type: str, architecture: list, number_labels: int, embedding_type: str,
+             base_path: str=MODEL_PATH, name: str="classifier", model_load: bool=False
+        ):
+        super().__init__(base_path, name, model_load)
         self.label_type = label_type
         self.architecture = architecture
         self.number_labels = number_labels
@@ -88,12 +94,12 @@ class BaseTensorflowModel(object):
         else:
             return [checkpoint]
 
-    def fit_with_tf_dataset(self, train_dataset, val_dataset, epochs=30, callbacks=None):
+    def fit_dataset(self, train_dataset, val_dataset, epochs=30, callbacks=None):
         callbacks = [] if not callbacks else callbacks
 
         return self.model.fit(train_dataset, epochs=epochs, validation_data=val_dataset, callbacks=callbacks)
 
-    def fit_with_numpy(self, x, y, x_val, y_val, epochs=30, callbacks=None):
+    def fit_numpy(self, x, y, x_val, y_val, epochs=30, callbacks=None):
         callbacks = [] if not callbacks else callbacks
 
         return self.model.fit(x, y, epochs=epochs, validation_data=(x_val, y_val), callbacks=callbacks)
