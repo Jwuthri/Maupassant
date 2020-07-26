@@ -1,21 +1,25 @@
-import pickle
 import numpy as np
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from maupassant.utils import timer
+from maupassant.settings import MODEL_PATH
+from maupassant.utils import ModelSaverLoader
 
 
-class Tfidf(object):
+class Tfidf(ModelSaverLoader):
 
-	def __init__(self, bigrams=False, unigrams=True, analyzer='word'):
+	def __init__(
+			self, bigrams=False, unigrams=True, analyzer='word',
+			base_path=MODEL_PATH, name="tf_idf", model_load=False):
+		super().__init__(base_path, name, model_load)
 		self.unigrams = unigrams
 		self.bigrams = bigrams
 		self.analyzer = analyzer
-		self.ngram_range = self.get_ngrams_range()
-		self.tfidf = self.get_tfidf()
+		self.ngram_range = self._get_ngrams_range()
+		self.tfidf = self.get_model()
 
-	def get_ngrams_range(self):
+	def _get_ngrams_range(self):
 		contains_one_of = self.unigrams or self.bigrams
 		assert contains_one_of is True
 		if self.unigrams:
@@ -26,11 +30,11 @@ class Tfidf(object):
 		else:
 			return 2, 2
 
-	def get_tfidf(self):
+	def get_model(self):
 		return TfidfVectorizer(analyzer=self.analyzer, ngram_range=self.ngram_range)
 
 	@timer
-	def fit(self, documents):
+	def fit_model(self, documents):
 		assert type(documents) in [list, np.ndarray]
 		self.tfidf.fit(documents)
 
@@ -44,6 +48,3 @@ class Tfidf(object):
 	@property
 	def get_features_name(self):
 		return self.tfidf.get_feature_names()
-
-	def save(self, filename):
-		pickle.dump(self.tfidf, open(filename, "wb"))

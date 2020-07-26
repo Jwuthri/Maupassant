@@ -106,7 +106,7 @@ class Trainer(TrainerHelper):
         self.feature = feature
         self.__dataset__ = TensorflowDataset(feature, label, multi_label, batch_size, buffer_size)
         self.train_dataset, self.test_dataset, self.val_dataset = self.__dataset__.main(train_df, test_df, val_df)
-        self.label_encoder = {self.label: {"encoder": self.__dataset__.lb, "label_type": self.label_type, "id": 0}}
+        self.label_encoder = {self.label: {"encoder": self.__dataset__.encoder, "label_type": self.label_type, "id": 0}}
         super().__init__(label_type, architecture, self.__dataset__.nb_classes, embedding_type)
 
     def main(self):
@@ -120,7 +120,7 @@ class Trainer(TrainerHelper):
             experiment = Experiment(api_key=self.API_KEY, project_name=self.PROJECT_NAME, workspace=self.WORKSPACE)
             experiment.log_dataset_hash(self.train_dataset)
             experiment.add_tags(['tensorflow', self.label, self.architecture, self.embedding_type])
-            experiment.log_parameters(dict(enumerate(self.__dataset__.lb.classes_)))
+            experiment.log_parameters(dict(enumerate(self.__dataset__.encoder.classes_)))
             with experiment.train():
                 history = self.fit_model(self.train_dataset, self.val_dataset, epochs=self.epochs)
         elif self.use_comet:

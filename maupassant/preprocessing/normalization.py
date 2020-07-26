@@ -12,7 +12,7 @@ from nltk.stem.snowball import SnowballStemmer
 from maupassant.preprocessing.tokenization import SentenceTokenization
 
 
-class TextNormalization:
+class TextNormalization(object):
 
     def __init__(self, stemmer='PorterStemmer', language='en'):
         self.stemmer = stemmer

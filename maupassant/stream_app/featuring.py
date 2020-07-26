@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from maupassant.feature_extraction.pretrainedembedding import PretrainedEmbedding
+from maupassant.feature_extraction.pretrained_embedding import PretrainedEmbedding
 from maupassant.feature_extraction.tfidf import Tfidf
 
 
@@ -22,7 +22,7 @@ class Featuring(object):
             else:
                 bigrams = st.checkbox('Use bigrams?')
                 self.tfidf = Tfidf(bigrams=bigrams)
-                self.tfidf.fit(documents=[text])
+                self.tfidf.fit_model(documents=[text])
                 data = self.tfidf.transform(document=[text])
                 cols = self.tfidf.get_features_name
                 df = pd.DataFrame(data)

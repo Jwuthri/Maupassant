@@ -5,7 +5,7 @@ import plotly.express as px
 from sklearn.model_selection import train_test_split
 
 from maupassant.feature_decomposition.dimension_reduction import Decomposition
-from maupassant.feature_extraction.pretrainedembedding import PretrainedEmbedding
+from maupassant.feature_extraction.pretrained_embedding import PretrainedEmbedding
 from maupassant.feature_extraction.tfidf import Tfidf
 from maupassant.dataset.pandas import remove_rows_contains_null
 
@@ -32,7 +32,7 @@ class TextApplication(object):
                     tfidf = Tfidf(bigrams=True, unigrams=False)
                 else:
                     tfidf = Tfidf(bigrams=False, unigrams=True)
-                tfidf.fit(documents=data[feature].values)
+                tfidf.fit_model(documents=data[feature].values)
                 new_data = pd.DataFrame(tfidf.transform(document=data[feature].values))
                 new_data.columns = tfidf.get_features_name
             else:
@@ -55,7 +55,7 @@ class TextApplication(object):
     @staticmethod
     def reduce_dimension(labels, embeddings_data, dim_reduction_model, n_components):
         model = Decomposition(model=dim_reduction_model, n_components=n_components)
-        model.fit(embeddings_data.values, labels.values)
+        model.fit_model(embeddings_data.values, labels.values)
         reduce_data = pd.DataFrame(model.transform(embeddings_data.values, labels.values))
         reduce_data['label'] = labels
         if n_components == 3:

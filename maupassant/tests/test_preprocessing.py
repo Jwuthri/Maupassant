@@ -2,7 +2,7 @@ from maupassant.preprocessing.tokenization import SentenceTokenization, Sequence
 from maupassant.preprocessing.normalization import TextNormalization
 
 
-class TestTokenization:
+class TestTokenization(object):
 
     def test_sentence_tokenization_tokenize(self):
         sentence = "Let me tell you something you already know."
@@ -31,7 +31,7 @@ class TestTokenization:
         assert sequence == "Let me tell you something you already know. The world ain’t all sunshine and rainbows."
 
 
-class TestNormalization:
+class TestNormalization(object):
 
     def test_text_correction(self):
         text = 'Let me tell you somthing you alrady know.'

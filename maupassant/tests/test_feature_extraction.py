@@ -4,12 +4,12 @@ import pandas as pd
 from maupassant.feature_extraction.tfidf import Tfidf
 
 
-class TestTfIdf:
+class TestTfIdf(object):
 
     def test_transform(self):
         tfidf = Tfidf()
         docs = ['where you from', 'where are you']
-        tfidf.fit(documents=docs)
+        tfidf.fit_model(documents=docs)
         data = tfidf.transform(document=docs)
         t_data = np.array(
             [[0., 0.70490949, 0.50154891, 0.50154891], [0.70490949, 0., 0.50154891, 0.50154891]]
@@ -22,7 +22,7 @@ class TestTfIdf:
     def test_get_features_name(self):
         tfidf = Tfidf()
         docs = ['where you from', 'where are you']
-        tfidf.fit(documents=docs)
+        tfidf.fit_model(documents=docs)
         columns = tfidf.get_features_name
         t_columns = ['are', 'from', 'where', 'you']
 
@@ -31,7 +31,7 @@ class TestTfIdf:
     def test_end_to_end(self):
         tfidf = Tfidf()
         docs = ['where you from', 'where are you']
-        tfidf.fit(documents=docs)
+        tfidf.fit_model(documents=docs)
         data = tfidf.transform(document=docs)
         columns = tfidf.get_features_name
         data = [[round(x, 3) for x in xx] for xx in data]

@@ -4,7 +4,7 @@ from nltk.tokenize.treebank import TreebankWordDetokenizer
 from tensorflow.keras.preprocessing.text import Tokenizer
 
 
-class SentenceTokenization:
+class SentenceTokenization(object):
 
     def __int__(self):
         pass
@@ -18,7 +18,7 @@ class SentenceTokenization:
         return TreebankWordDetokenizer().detokenize(words)
 
 
-class SequenceTokenization:
+class SequenceTokenization(object):
 
     def __int__(self):
         pass

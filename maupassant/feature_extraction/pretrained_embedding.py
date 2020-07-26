@@ -10,9 +10,9 @@ class PretrainedEmbedding(object):
     def __init__(self, model_type='multilingual', name="embedding_layer"):
         self.name = name
         self.model_type = model_type.lower()
-        self.model = self.init_model()
+        self.model = self.get_model()
 
-    def init_model(self):
+    def get_model(self):
         assert self.model_type in ["multilingual", "multilingual-qa", "universal-encoder"]
         module_mapping = {
             "multilingual": "https://tfhub.dev/google/universal-sentence-encoder-multilingual/3",
@@ -29,4 +29,4 @@ class PretrainedEmbedding(object):
 
     @predict_format
     def predict_batch(self, x):
-        raise NotImplemented
+        raise self.model(x)

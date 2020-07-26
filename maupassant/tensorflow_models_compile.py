@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from maupassant.feature_extraction.pretrainedembedding import PretrainedEmbedding
+from maupassant.feature_extraction.pretrained_embedding import PretrainedEmbedding
 from maupassant.tensorflow_metric_loss_optimizer import macro_f1, macro_soft_f1
 from maupassant.settings import MODEL_PATH
 from maupassant.utils import ModelSaverLoader

@@ -9,8 +9,8 @@ from maupassant.dataset.pandas import remove_rows_contains_null
 
 class TensorflowDataset(LabelEncoding):
 
-    def __init__(self, feature, label, multi_label, batch_size, buffer_size):
-        super().__init__(multi_label)
+    def __init__(self, feature, label, multi_label, batch_size, buffer_size, **kwargs):
+        super().__init__(multi_label, **kwargs)
         self.feature = feature
         self.label = label
         self.multi_label = multi_label
@@ -62,10 +62,10 @@ class TensorflowDataset(LabelEncoding):
         x_test, y_test = self.split_x_y(test_df)
         x_val, y_val = self.split_x_y(val_df)
 
-        self.fit_lb(y_train)
-        y_train_encoded = self.transform_lb(y_train)
-        y_test_encoded = self.transform_lb(y_test)
-        y_val_encoded = self.transform_lb(y_val)
+        self.fit_encoder(y_train)
+        y_train_encoded = self.transform_encoder(y_train)
+        y_test_encoded = self.transform_encoder(y_test)
+        y_val_encoded = self.transform_encoder(y_val)
 
         train_dataset = self.to_tensorflow_dataset(x_train, y_train_encoded)
         test_dataset = self.to_tensorflow_dataset(x_test, y_test_encoded)

@@ -1,43 +1,31 @@
-import pickle
-
 from sklearn.preprocessing import MultiLabelBinarizer, LabelEncoder
 
-from maupassant.utils import text_format, timer
+from maupassant.utils import ModelSaverLoader
+from maupassant.settings import MODEL_PATH
 
 
-class LabelEncoding(object):
+class LabelEncoding(ModelSaverLoader):
 
-    def __init__(self, multi_label):
+    def __init__(self, multi_label, base_path=MODEL_PATH, name="label_encoder", model_load=False):
+        super().__init__(base_path, name, model_load)
         self.multi_label = multi_label
         self.classes_mapping = dict()
         self.nb_classes = 0
-        self.lb = self.init_lb(multi_label)
+        self.encoder = self.init_encoder()
 
-    @staticmethod
-    def init_lb(multi_label):
-        if multi_label:
+    def init_encoder(self):
+        if self.multi_label:
             return MultiLabelBinarizer()
         else:
             return LabelEncoder()
 
-    @timer
-    def fit_lb(self, y):
-        self.lb.fit(y)
-        self.classes_mapping = dict(enumerate(self.lb.classes_))
-        self.nb_classes = len(self.lb.classes_)
+    def fit_encoder(self, y):
+        self.encoder.fit(y)
+        self.classes_mapping = dict(enumerate(self.encoder.classes_))
+        self.nb_classes = len(self.encoder.classes_)
 
-    @timer
-    def transform_lb(self, y):
-        return self.lb.transform(y)
+    def transform_encoder(self, y):
+        return self.encoder.transform(y)
 
-    def inverse_lb(self, y):
-        return self.lb.inverse_transform(y)
-
-    def save_lb(self, filename):
-        pickle.dump(self.lb, open(filename, "wb"))
-
-    def show_classes(self):
-        f_blue = text_format(txt_color='blue')
-        end = text_format(end=True)
-        for (i, label) in enumerate(self.lb.classes_):
-            print(f"{i}. {f_blue}{label}{end}")
+    def inverse_encoder(self, y):
+        return self.encoder.inverse_transform(y)

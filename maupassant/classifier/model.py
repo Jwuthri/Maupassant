@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from maupassant.feature_extraction.pretrainedembedding import PretrainedEmbedding
+from maupassant.feature_extraction.pretrained_embedding import PretrainedEmbedding
 
 
 class TensorflowModel(object):

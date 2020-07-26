@@ -128,8 +128,8 @@ class Trainer(TrainerHelper):
         experiment = None
         train_dataset, test_dataset, val_dataset = self.get_dataset(self.label, self.feature, self.text)
         le = LabelEncoding(False)
-        le.fit_lb(train_dataset[self.label].values)
-        label_encoder = {self.label: {"encoder": le.lb, "label_type": "binary-label", "id": 0}}
+        le.fit_encoder(train_dataset[self.label].values)
+        label_encoder = {self.label: {"encoder": le.encoder, "label_type": "binary-label", "id": 0}}
 
         if self.text:
             train_dataset = (

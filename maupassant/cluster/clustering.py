@@ -1,21 +1,21 @@
-import pickle
-
 import matplotlib.pyplot as plt
 
 from hdbscan import HDBSCAN
 from sklearn.cluster import KMeans, AgglomerativeClustering
 
 from maupassant.utils import timer
+from maupassant.settings import MODEL_PATH
+from maupassant.utils import ModelSaverLoader
 
 
-class Clustering(object):
+class Clustering(ModelSaverLoader):
 
-    def __init__(self, model_name='KMEANS'):
+    def __init__(self, model_name='KMEANS', base_path=MODEL_PATH, name="clustering", model_load=False):
+        super().__init__(base_path, name, model_load)
         self.model_name = model_name.upper()
-        self.model = self.get_clustering
+        self.model = self.get_model()
 
-    @property
-    def get_clustering(self):
+    def get_model(self):
         assert self.model_name in ['KMEANS', 'HDBSCAN', 'AHC']
         if self.model_name == 'KMEANS':
             return KMeans
@@ -25,20 +25,17 @@ class Clustering(object):
             return HDBSCAN
 
     @timer
-    def fit(self, x, n_clusters=5, **kwargs):
+    def fit_model(self, x, n_clusters=5, **kwargs):
         if self.model_name == "HDBSCAN":
-            self.model = self.model(**kwargs).fit(x)
+            self.model = self.model(**kwargs).fit_model(x)
         else:
-            self.model = self.model(n_clusters=n_clusters, **kwargs).fit(x)
+            self.model = self.model(n_clusters=n_clusters, **kwargs).fit_model(x)
 
     def predict(self, x):
         if self.model_name == "KMEANS":
             return self.model.predict(X=x)
         else:
             return self.model.fit_predict(X=x)
-
-    def save(self, filename):
-        pickle.dump(self.model, open(filename, "wb"))
 
 
 class Elbow(object):
@@ -56,7 +53,7 @@ class Elbow(object):
         return max_clusters
 
     @timer
-    def fit(self, x, max_clusters=15):
+    def fit_model(self, x, max_clusters=15):
         for i in range(1, max_clusters):
             kmeans = KMeans(n_clusters=i, init='k-means++')
             kmeans.fit(x)
