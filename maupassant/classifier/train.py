@@ -10,7 +10,7 @@ import tensorflow as tf
 from maupassant.utils import timer
 from maupassant.classifier.model import TensorflowModel
 from maupassant.dataset.tensorflow import TensorflowDataset
-from maupassant.tensorflow_metric_loss_optimizer import macro_soft_f1, macro_f1
+from maupassant.tensorflow_metric_loss_optimizer import f1_loss, f1_score
 from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE, MODEL_PATH
 
 
@@ -23,13 +23,13 @@ class TrainerHelper(TensorflowModel):
 
     def compile_model(self):
         if self.info['label_type'] == "binary-label":
-            self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=[macro_f1, "binary_accuracy"])
+            self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=[f1_score, "binary_accuracy"])
         elif self.info['label_type'] == "multi-label":
-            self.model.compile(optimizer="adam", loss=macro_soft_f1,
-                metrics=[macro_f1, "categorical_accuracy", "top_k_categorical_accuracy"])
+            self.model.compile(optimizer="adam", loss=f1_loss,
+                               metrics=[f1_score, "categorical_accuracy", "top_k_categorical_accuracy"])
         else:
             self.model.compile(optimizer="adam", loss="sparse_categorical_crossentropy",
-                metrics=[macro_f1, "sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy"])
+                               metrics=[f1_score, "sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy"])
 
     @staticmethod
     def callback_func(checkpoint_path, tensorboard_dir=None):

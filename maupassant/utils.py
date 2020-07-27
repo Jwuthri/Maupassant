@@ -2,6 +2,7 @@ import os
 import json
 import time
 import pickle
+import shutil
 import datetime
 import functools
 
@@ -126,7 +127,7 @@ class ModelSaverLoader(object):
             print(f"Model information have been exported here => {self.paths['model_info_path']}")
 
     def load_info(self):
-        with open(self.paths['model_info_path'],) as json_file:
+        with open(self.paths['model_info_path'], "rb") as json_file:
             info = json.load(json_file)
 
         return info
@@ -137,7 +138,7 @@ class ModelSaverLoader(object):
             print(f"Model metrics have been exported here => {self.paths['metrics_path']}")
 
     def load_metrics(self):
-        with open(self.paths['metrics_path'],) as json_file:
+        with open(self.paths['metrics_path'], "rb") as json_file:
             metrics = json.load(json_file)
 
         return metrics
@@ -159,3 +160,10 @@ class ModelSaverLoader(object):
         model = pickle.load(open(self.paths['model_path'], "rb"))
 
         return model
+
+    def zip_model(self):
+        zip_path = shutil.make_archive(
+            self.paths['path'], "zip", os.path.dirname(self.paths['path']), os.path.basename(self.paths['path'])
+        )
+
+        return zip_path

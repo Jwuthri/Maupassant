@@ -4,7 +4,7 @@ import tensorflow as tf
 
 
 @tf.function
-def macro_soft_f1(y, y_hat):
+def f1_loss(y, y_hat):
     """Compute the macro soft F1-score as a cost (average 1 - soft-F1 across all labels)."""
     y = tf.cast(y, tf.float32)
     y_hat = tf.cast(y_hat, tf.float32)
@@ -19,7 +19,7 @@ def macro_soft_f1(y, y_hat):
 
 
 @tf.function
-def macro_f1(y, y_hat, thresh=0.5):
+def f1_score(y, y_hat, thresh=0.5):
     """Compute the macro F1-score on a batch of observations (average F1 across labels)"""
     y_pred = tf.cast(tf.greater(y_hat, thresh), tf.float32)
     tp = tf.cast(tf.math.count_nonzero(y_pred * y, axis=0), tf.float32)
@@ -46,11 +46,11 @@ def hamming_score(y_true, y_pred):
     return np.mean(acc_list)
 
 
-def get_metrics(history, metric='macro_f1'):
+def get_metrics(history, metric='f1_score'):
     """Extract the loss and metric from the model"""
     train_loss = history.history["loss"]
     val_loss = history.history["val_loss"]
     train_metric = history.history[metric]
     val_metric = history.history[f"val_{metric}"]
 
-    return train_loss, val_loss, train_metric, val_metric
+    return {"train_loss": train_loss, "val_loss": val_loss, "train_metric": train_metric, "val_metric": val_metric}

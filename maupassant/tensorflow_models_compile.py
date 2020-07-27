@@ -1,35 +1,40 @@
 import tensorflow as tf
 
 from maupassant.feature_extraction.pretrained_embedding import PretrainedEmbedding
-from maupassant.tensorflow_metric_loss_optimizer import macro_f1, macro_soft_f1
+from maupassant.tensorflow_metric_loss_optimizer import f1_score, f1_loss
 from maupassant.settings import MODEL_PATH
 from maupassant.utils import ModelSaverLoader
+
+tf.compat.v1.disable_eager_execution()
+tf.compat.v1.disable_control_flow_v2()
 
 
 class BaseTensorflowModel(ModelSaverLoader):
 
-    def __init__(self,
-             label_type: str, architecture: list, number_labels: int, embedding_type: str,
-             base_path: str=MODEL_PATH, name: str="classifier", model_load: bool=False
-        ):
+    def __init__(self, label_type, architecture, number_labels, pretrained_embedding, base_path=MODEL_PATH, name="classifier", model_load=False):
         super().__init__(base_path, name, model_load)
         self.label_type = label_type
         self.architecture = architecture
         self.number_labels = number_labels
-        self.embedding_type = embedding_type
+        self.pretrained_embedding = pretrained_embedding
         self.model = tf.keras.Sequential()
+        self.model_info = {
+            "architecture": architecture, "label_type": label_type,
+            "pretrained_embedding": pretrained_embedding, "number_labels": number_labels,
+        }
 
-    def get_input_layer(self, input_size, embedding_size, vocab_size, name):
-        if self.embedding_type in ["multilingual", "multilingual-qa", "universal-encoder"]:
+    def get_input_layer(self, input_size, embedding_size, vocab_size, name="input_layer"):
+        if self.pretrained_embedding:
             input_layer = tf.keras.Input((), dtype=tf.string, name=name)
-            layer = PretrainedEmbedding(model_type=self.embedding_type).model(input_layer)
+            layer = PretrainedEmbedding(name="embedding_layer").model(input_layer)
             layer = tf.keras.layers.Reshape(target_shape=(1, 512))(layer)
+            self.model_info['embedding_size'] = 512
         else:
-            if not embedding_size or not vocab_size or not input_size:
-                raise Exception('Please provide an "embedding_size", a "vocab_size" and an "input_size"')
-            else:
-                input_layer = tf.keras.Input((input_size), name=name)
-                layer = tf.keras.layers.Embedding(vocab_size, embedding_size, name="embedding_layer")(input_layer)
+            input_layer = tf.keras.Input((input_size), name=name)
+            layer = tf.keras.layers.Embedding(vocab_size, embedding_size, name="embedding_layer")(input_layer)
+            self.model_info['input_size'] = input_size
+            self.model_info['vocab_size'] = vocab_size
+            self.model_info['embedding_size'] = embedding_size
 
         return input_layer, layer
 
@@ -45,8 +50,8 @@ class BaseTensorflowModel(ModelSaverLoader):
 
         return output
 
-    def build_model(self, input_size=None, embedding_size=None, vocab_size=None, name="input_layer"):
-        input_layer, layer = self.get_input_layer(input_size, embedding_size, vocab_size, name)
+    def build_model(self, input_size=None, embedding_size=None, vocab_size=None):
+        input_layer, layer = self.get_input_layer(input_size, embedding_size, vocab_size)
         for block, unit in self.architecture:
             if block == "CNN":
                 layer = tf.keras.layers.Conv1D(unit, kernel_size=3, strides=1, padding='same', activation='relu')(layer)
@@ -72,15 +77,15 @@ class BaseTensorflowModel(ModelSaverLoader):
     def compile_model(self):
         if self.label_type == "binary-class":
             self.model.compile(
-                optimizer="nadam", loss="binary_crossentropy", metrics=[macro_f1, "binary_accuracy"])
+                optimizer="nadam", loss="binary_crossentropy", metrics=[f1_score, "binary_accuracy"])
         elif self.label_type == "multi-label":
             self.model.compile(
-                optimizer="nadam", loss=macro_soft_f1,
-                metrics=[macro_f1, "categorical_accuracy", "top_k_categorical_accuracy"])
+                optimizer="nadam", loss=f1_loss,
+                metrics=[f1_score, "categorical_accuracy", "top_k_categorical_accuracy"])
         elif self.label_type == "multi-class":
             self.model.compile(
                 optimizer="nadam", loss="sparse_categorical_crossentropy",
-                metrics=[macro_f1, "sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy"])
+                metrics=[f1_score, "sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy"])
         else:
             raise(Exception("Please provide a 'label_type' in ['binary-class', 'multi-label', 'multi-class']"))
 

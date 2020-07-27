@@ -8,7 +8,7 @@ from comet_ml import Experiment
 import tensorflow as tf
 
 from maupassant.utils import timer
-from maupassant.tensorflow_metric_loss_optimizer import macro_f1
+from maupassant.tensorflow_metric_loss_optimizer import f1_score
 from maupassant.dataset.labels import LabelEncoding
 from maupassant.summarizer.model import TensorflowModel
 from maupassant.dataset.pandas import remove_rows_contains_null
@@ -22,7 +22,7 @@ class TrainerHelper(TensorflowModel):
         super().__init__(architecture, embedding_type, text)
 
     def compile_model(self):
-        self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=[macro_f1, "binary_accuracy"])
+        self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=[f1_score, "binary_accuracy"])
 
     @staticmethod
     def callback_func(checkpoint_path, tensorboard_dir=None):
