@@ -57,6 +57,7 @@ class Trainer(BaseTensorflowModel):
         self.export_weights(self.model)
         self.export_info(self.model_info)
         self.export_metrics(metrics)
+        self.export_tf_model_plot(self.model)
         self.export_tokenizer(self.tokenizer)
         zip_model = self.zip_model()
 
@@ -68,13 +69,13 @@ if __name__ == '__main__':
     from maupassant.settings import DATASET_PATH
 
     dataset_path = os.path.join(DATASET_PATH, "french_phrase.csv")
-    dataset = pd.read_csv(dataset_path, nrows=10000)
+    dataset = pd.read_csv(dataset_path, nrows=20000)
     architecture = [('RNN', 512), ('DENSE', 1024)]
     # architecture = [('LSTM', 1024), ('DENSE', 2048)]  # If you want something more accurate but slower
     input_shape = 64  # 512 If you want to catch more context from the text
     embedding_size = 128  # 512 If you want to improve the perplexity
     number_labels_max = 5000
-    epochs = 5
+    epochs = 2
     trainer = Trainer(
         architecture, number_labels_max, data=dataset['cleaned'], epochs=epochs,
         input_shape=input_shape, embedding_size=embedding_size

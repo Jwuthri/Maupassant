@@ -65,6 +65,7 @@ class Trainer(BaseTensorflowModel):
         self.export_info(self.model_info)
         self.export_metrics(metrics)
         self.export_encoder(self.encoder)
+        self.export_tf_model_plot(self.model)
         zip_model = self.zip_model()
 
         return zip_model

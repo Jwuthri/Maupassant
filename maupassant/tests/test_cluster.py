@@ -1,6 +1,6 @@
 from sklearn.datasets import make_classification
 
-from maupassant.cluster.clustering import Clustering, Elbow
+from maupassant.clustering.clustering import Clustering, Elbow
 
 
 nsamples = 500
