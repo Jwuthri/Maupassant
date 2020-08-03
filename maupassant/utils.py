@@ -47,12 +47,13 @@ def timer(func):
         run_time = time.perf_counter() - start_time
         bg_fw = text_format(txt_color='white', bg_color='green', txt_style='bold')
         fc = text_format(txt_color='cyan', txt_style='bold')
+        fr = text_format(txt_color='red', txt_style='bold')
         fb = text_format(txt_color='blue', txt_style='bold')
         end = text_format(end=True)
 
         print(f"{bg_fw}Function:{end}{fc}{func.__name__}{end}")
-        print(f"{bg_fw}kwargs:{end}{fb}{kwargs}{end}")
-        print(f"{bg_fw}Duration:{end}{fb}{run_time*1000:.3f}ms{end}")
+        print(f"{bg_fw}kwargs:  {end}{fb}{kwargs}{end}")
+        print(f"{bg_fw}Duration:{end}{fr}{run_time*1000:.3f}ms{end}")
         return value
 
     return wrapper_timer
@@ -89,6 +90,7 @@ class ModelSaverLoader(object):
 
         return {
             "path": base_dir,
+            "weights_path": os.path.join(base_dir, 'weights'),
             "model_path": os.path.join(base_dir, 'model.pkl'),
             "model_plot_path":  os.path.join(base_dir, "model.jpg"),
             "model_info_path": os.path.join(base_dir, "model.json"),
@@ -103,8 +105,8 @@ class ModelSaverLoader(object):
         tf.keras.utils.plot_model(model, to_file=self.paths['model_plot_path'], show_shapes=True)
 
     def export_weights(self, model):
-        model.save_weights(self.paths['path'])
-        print(f"Model has been exported here => {self.paths['path']}")
+        model.save_weights(self.paths['weights_path'])
+        print(f"Model has been exported here => {self.paths['weights_path']}")
 
     def load_weights(self, model):
         latest = tf.train.latest_checkpoint(self.paths['path'])

@@ -7,8 +7,8 @@ import streamlit as st
 
 import tensorflow as tf
 
-from maupassant.classifier.predict import Predictor
-from maupassant.classifier.model import TensorflowModel
+from maupassant.text_classification.predict import Predictor
+from maupassant.text_classification.model import TensorflowModel
 from maupassant.utils import timer
 from maupassant.utils import predict_format
 

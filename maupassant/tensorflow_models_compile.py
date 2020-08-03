@@ -1,3 +1,4 @@
+import os
 import tensorflow as tf
 
 from maupassant.feature_extraction.pretrained_embedding import PretrainedEmbedding
@@ -5,13 +6,14 @@ from maupassant.tensorflow_metric_loss_optimizer import f1_score, f1_loss
 from maupassant.settings import MODEL_PATH
 from maupassant.utils import ModelSaverLoader
 
-tf.compat.v1.disable_eager_execution()
-tf.compat.v1.disable_control_flow_v2()
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 
 class BaseTensorflowModel(ModelSaverLoader):
 
-    def __init__(self, label_type, architecture, number_labels, pretrained_embedding, base_path=MODEL_PATH, name="classifier", model_load=False):
+    def __init__(
+            self, label_type, architecture, number_labels, pretrained_embedding,
+            base_path=MODEL_PATH, name="text_classification", model_load=False):
         super().__init__(base_path, name, model_load)
         self.label_type = label_type
         self.architecture = architecture
@@ -66,31 +68,32 @@ class BaseTensorflowModel(ModelSaverLoader):
             elif block == "FLATTEN":
                 layer = tf.keras.layers.Flatten()(layer)
             elif block == "DROPOUT":
-                layer = tf.keras.layers.Dropout(0.2)(layer)
+                layer = tf.keras.layers.Dropout(unit)(layer)
             elif block == "GLOBAL_POOL":
                 layer = tf.keras.layers.GlobalMaxPooling1D()(layer)
             elif block == "MAX_POOL":
                 layer = tf.keras.layers.MaxPool1D()(layer)
         output_layer = self.get_output_layer()(layer)
-        self.model = tf.keras.models.Model(inputs=input_layer, outputs=output_layer)
+
+        return tf.keras.models.Model(inputs=input_layer, outputs=[output_layer])
 
     def compile_model(self):
         if self.label_type == "binary-class":
             self.model.compile(
-                optimizer="nadam", loss="binary_crossentropy", metrics=[f1_score, "binary_accuracy"])
+                optimizer="adam", loss="binary_crossentropy", metrics=[f1_score, "binary_accuracy"])
         elif self.label_type == "multi-label":
             self.model.compile(
-                optimizer="nadam", loss=f1_loss,
+                optimizer="adam", loss=f1_loss,
                 metrics=[f1_score, "categorical_accuracy", "top_k_categorical_accuracy"])
         elif self.label_type == "multi-class":
             self.model.compile(
-                optimizer="nadam", loss="sparse_categorical_crossentropy",
+                optimizer="adam", loss="sparse_categorical_crossentropy",
                 metrics=[f1_score, "sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy"])
         else:
             raise(Exception("Please provide a 'label_type' in ['binary-class', 'multi-label', 'multi-class']"))
 
     @staticmethod
-    def callback_func(checkpoint_path: str, tensorboard_dir: str=None):
+    def callback_func(checkpoint_path, tensorboard_dir=None):
         checkpoint = tf.keras.callbacks.ModelCheckpoint(
             filepath=checkpoint_path, verbose=1, period=1, save_weights_only=True)
         if tensorboard_dir:

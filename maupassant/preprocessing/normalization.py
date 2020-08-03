@@ -4,9 +4,7 @@ import contractions
 
 from autocorrect import Speller
 
-from nltk.stem import PorterStemmer
-from nltk.stem import LancasterStemmer
-from nltk.stem import WordNetLemmatizer
+from nltk.stem import PorterStemmer, LancasterStemmer, WordNetLemmatizer
 from nltk.stem.snowball import SnowballStemmer
 
 from maupassant.preprocessing.tokenization import SentenceTokenization
@@ -18,6 +16,10 @@ class TextNormalization(object):
         self.stemmer = stemmer
         self.lemstem = self.get_lemstem
         self.checker = Speller(lang=language)
+        self.delimiters = "|".join([
+            "!", "@", "#", "$", "%", "^", "&", "_", "-", ",", "<", ">", "`", "~", ":", ";", "=", "[", "]", "{", "}",
+            "\\+", "\n{2,}", "\\s", "\n", "\\?", "\\.", "\\(", "\\)"
+        ])
 
     @property
     def get_lemstem(self):
@@ -93,6 +95,9 @@ class TextNormalization(object):
     def _replace_group(m):
         c, cc = m.groups()
         return c
+
+    def split_text_for_tokenizer(self, text):
+        return re.sub(f'({self.delimiters})', r' \1 ', text.lower()).strip()
 
     def replace_char_rep(self, text):
         char_rep = re.compile(r'(\S)(\1{2,})')

@@ -1,22 +1,19 @@
 import os
 
 from comet_ml import Experiment
-import tensorflow as tf
 
-from maupassant.word_prediction.dataset import BuildDataset
+from maupassant.utils import text_format
+from maupassant.text_generation.dataset import BuildDataset
 from maupassant.tensorflow_metric_loss_optimizer import get_metrics
 from maupassant.tensorflow_models_compile import BaseTensorflowModel
 from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE, MODEL_PATH
-
-tf.compat.v1.disable_eager_execution()
-tf.compat.v1.disable_control_flow_v2()
 
 
 class Trainer(BaseTensorflowModel):
 
     def __init__(
         self, architecture, number_labels_max, data,
-        batch_size=512, base_path=MODEL_PATH, name="word_prediction", input_shape=64, embedding_size=128, epochs=30,
+        batch_size=512, base_path=MODEL_PATH, name="text_generation", input_shape=64, embedding_size=128, epochs=30,
         api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE, use_comet=True
     ):
         dataset_generator = BuildDataset(batch_size=batch_size, input_shape=input_shape, max_labels=number_labels_max)
@@ -37,12 +34,15 @@ class Trainer(BaseTensorflowModel):
 
     def train(self):
         os.mkdir(self.paths['path'])
+        bg_fw = text_format(txt_color='white', bg_color='green', txt_style='bold')
+        end_formatting = text_format(end=True)
         if self.use_comet and self.api_key and self.project_name and self.workspace:
             experiment = Experiment(api_key=self.api_key, project_name=self.project_name, workspace=self.workspace)
+            print(f"{bg_fw} Please go on the url: {experiment.url} {end_formatting}")
             experiment.log_dataset_hash(self.train_dataset)
-            experiment.add_tags([str(self.architecture), "word_prediction", f"nb_labels_{self.number_labels}"])
+            experiment.add_tags([str(self.architecture), "text_generation", f"nb_labels_{self.number_labels}"])
             with experiment.train():
-                hist = self.model.fit_dataset(self.train_dataset, self.val_dataset, self.epochs)
+                hist = self.fit_dataset(self.train_dataset, self.val_dataset, self.epochs)
             experiment.end()
         elif self.use_comet:
             raise Exception("Please provide an api_key, project_name and workspace for comet_ml")
@@ -50,26 +50,33 @@ class Trainer(BaseTensorflowModel):
             callbacks = self.callback_func(
                 tensorboard_dir=self.paths['tensorboard_path'], checkpoint_path=self.paths['checkpoint_path']
             )
-            hist = self.model.fit_dataset(self.train_dataset, self.val_dataset, self.epochs, callbacks)
+            print(f"{bg_fw} tensorboard --logdir {self.paths['tensorboard_path']} {end_formatting}")
+            hist = self.fit_dataset(self.train_dataset, self.val_dataset, self.epochs, callbacks)
 
-        metrics = get_metrics(hist, "sparse_categorical_crossentropy")
+        metrics = get_metrics(hist, "sparse_categorical_accuracy")
         self.export_weights(self.model)
         self.export_info(self.model_info)
         self.export_metrics(metrics)
         self.export_tokenizer(self.tokenizer)
-        self.zip_model()
+        zip_model = self.zip_model()
+
+        return zip_model
 
 
 if __name__ == '__main__':
     import pandas as pd
     from maupassant.settings import DATASET_PATH
-    from maupassant.dataset.pandas import remove_rows_contains_null
 
-    dataset_path = os.path.join(DATASET_PATH, "french_phrase_300k.csv")
-    dataset = pd.read_csv(dataset_path)
-    dataset = remove_rows_contains_null(dataset, "cleaned_agent")
+    dataset_path = os.path.join(DATASET_PATH, "french_phrase.csv")
+    dataset = pd.read_csv(dataset_path, nrows=10000)
     architecture = [('RNN', 512), ('DENSE', 1024)]
+    # architecture = [('LSTM', 1024), ('DENSE', 2048)]  # If you want something more accurate but slower
+    input_shape = 64  # 512 If you want to catch more context from the text
+    embedding_size = 128  # 512 If you want to improve the perplexity
     number_labels_max = 5000
-    data = dataset['cleaned_agent'].values
-    trainer = Trainer(architecture, number_labels_max, data)
+    epochs = 5
+    trainer = Trainer(
+        architecture, number_labels_max, data=dataset['cleaned'], epochs=epochs,
+        input_shape=input_shape, embedding_size=embedding_size
+    )
     trainer.train()

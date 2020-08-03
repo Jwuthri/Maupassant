@@ -9,7 +9,7 @@ import tensorflow as tf
 
 from maupassant.utils import timer
 from maupassant.tensorflow_metric_loss_optimizer import f1_score
-from maupassant.dataset.labels import LabelEncoding
+from maupassant.dataset.label_encoder import LabelEncoding
 from maupassant.summarizer.model import TensorflowModel
 from maupassant.dataset.pandas import remove_rows_contains_null
 from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE, MODEL_PATH

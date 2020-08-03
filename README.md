@@ -203,7 +203,7 @@ import os
 
 import pandas as pd
 
-from maupassant.classifier.train import Trainer
+from maupassant.text_classification.train import Trainer
 from maupassant.settings import DATASET_PATH
 
 

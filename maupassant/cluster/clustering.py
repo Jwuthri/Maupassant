@@ -73,5 +73,3 @@ class Elbow(object):
         plt.ylabel('Distortion')
         plt.title('The Elbow Method showing the optimal n_clusters')
         plt.show()
-
-
