@@ -14,9 +14,9 @@ class Trainer(BaseTensorflowModel):
     def __init__(
         self, architecture, number_labels_max, data,
         batch_size=512, base_path=MODEL_PATH, name="text_generation", input_shape=64, embedding_size=128, epochs=30,
-        api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE, use_comet=True
+        api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE, use_comet=True, cleaning_func=None
     ):
-        dataset_generator = BuildDataset(batch_size=batch_size, input_shape=input_shape, max_labels=number_labels_max)
+        dataset_generator = BuildDataset(batch_size=batch_size, input_shape=input_shape, max_labels=number_labels_max, cleaning_func=cleaning_func)
         self.train_dataset, self.test_dataset, self.val_dataset = dataset_generator.generate(data)
         self.tokenizer = dataset_generator.tokenizer
         self.vocab_size = dataset_generator.vocab_size
