@@ -20,7 +20,7 @@ class BuildDataset(object):
         self.buffer_size = buffer_size
         self.batch_size = batch_size
         self.cleaning_func = cleaning_func
-        self.tokenizer = Tokenizer(filters='', num_words=35000, oov_token='[UNK]')
+        self.tokenizer = Tokenizer(filters='', num_words=30000, oov_token='[UNK]')
         self.vocab_size = 0
         self.number_labels = 0
 
@@ -32,6 +32,7 @@ class BuildDataset(object):
         pbar = tqdm.tqdm(total=len(data), desc="Cleaning the dataset")
         cleaned_texts = []
         for text in data.values:
+            text = "[CLS]" + text
             text = self.normalizer.split_text_for_tokenizer(text)
             text = self.normalizer.replace_char_rep(text=text)
             text = self.normalizer.replace_words_rep(text=text)
@@ -41,6 +42,7 @@ class BuildDataset(object):
                 text = self.cleaning_func(text)
             text = self.normalizer.remove_multiple_spaces(text=text)
             text = text.strip()
+            text += "[END]"
             cleaned_texts.append(text)
             pbar.update(1)
         pbar.close()
@@ -49,7 +51,7 @@ class BuildDataset(object):
 
     @staticmethod
     def concat_text(text):
-        return " [END] ".join(text)
+        return " ".join(text)
 
     def predictable_words(self):
         value = min(self.tokenizer.num_words, self.max_labels)

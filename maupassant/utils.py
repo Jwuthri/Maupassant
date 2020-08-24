@@ -86,7 +86,7 @@ class ModelSaverLoader(object):
         if self.model_load:
             base_dir = os.path.join(self.base_path, self.name)
         else:
-            base_dir = os.path.join(self.base_path, f"{self.date}_{self.name}")
+            base_dir = os.path.join(self.base_path, f"{self.name}_{self.date}")
 
         return {
             "path": base_dir,

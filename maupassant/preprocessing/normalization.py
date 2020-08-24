@@ -12,10 +12,10 @@ from maupassant.preprocessing.tokenization import SentenceTokenization
 
 class TextNormalization(object):
 
-    def __init__(self, stemmer='PorterStemmer', language='en'):
+    def __init__(self, stemmer='SnowballStemmer'):
         self.stemmer = stemmer
         self.lemstem = self.get_lemstem
-        self.checker = Speller(lang=language)
+        self.checker = Speller(lang="en")
         self.delimiters = "|".join([
             "!", "@", "#", "$", "%", "^", "&", "_", "-", ",", "<", ">", "`", "~", ":", ";", "=", "[", "]", "{", "}",
             "\\+", "\n{2,}", "\\s", "\n", "\\?", "\\.", "\\(", "\\)"
@@ -26,7 +26,7 @@ class TextNormalization(object):
         if self.stemmer == "WordNetLemmatizer":
             return WordNetLemmatizer()
         elif self.stemmer == "LancasterStemmer":
-            return LancasterStemmer("english")
+            return LancasterStemmer()
         elif self.stemmer == "SnowballStemmer":
             return SnowballStemmer("english", ignore_stopwords=True)
         else:
@@ -48,13 +48,13 @@ class TextNormalization(object):
         return SentenceTokenization().detokenize(stemmed)
 
     @staticmethod
-    def text_demojis(text, how_replace=""):
+    def text_demojis(text, to_text=False):
         emojis = emot.emoji(text)
         if isinstance(emojis, list):
             emojis = emojis[0]
         if emojis['flag']:
             for index in range(len(emojis["value"])):
-                if how_replace == 'mean':
+                if to_text:
                     source = emojis['value'][index]
                     target = emojis['mean'][index].split(':')[1]
                     text = text.replace(source, target)
@@ -64,13 +64,13 @@ class TextNormalization(object):
         return text
 
     @staticmethod
-    def text_demoticons(text, how_replace=""):
+    def text_demoticons(text, to_text=False):
         emoticons = emot.emoticons(text)
         if isinstance(emoticons, list):
             emoticons = emoticons[0]
         if emoticons['flag']:
             for index in range(len(emoticons["value"])):
-                if how_replace == 'mean':
+                if to_text:
                     source = emoticons['value'][index]
                     target = emoticons['mean'][index]
                     text = text.replace(source, target)
