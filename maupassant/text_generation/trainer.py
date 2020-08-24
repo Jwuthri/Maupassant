@@ -3,7 +3,7 @@ import os
 from comet_ml import Experiment
 import tensorflow as tf
 
-from maupassant.word_prediction.dataset import BuildDataset
+from maupassant.text_generation.dataset import BuildDataset
 from maupassant.tensorflow_metric_loss_optimizer import get_metrics
 from maupassant.tensorflow_models_compile import BaseTensorflowModel
 from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE, MODEL_PATH
@@ -16,11 +16,11 @@ class Trainer(BaseTensorflowModel):
 
     def __init__(
         self, architecture, number_labels_max, data,
-        batch_size=512, base_path=MODEL_PATH, name="word_prediction", input_shape=64, embedding_size=128, epochs=30,
+        batch_size=512, base_path=MODEL_PATH, name="text_generation", input_shape=64, embedding_size=128, epochs=30,
         api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE, use_comet=True
     ):
         dataset_generator = BuildDataset(batch_size=batch_size, input_shape=input_shape, max_labels=number_labels_max)
-        self.train_dataset, self.test_dataset, self.val_dataset = dataset_generator.generate(data)
+        self.train_dataset, self.val_dataset = dataset_generator.generate(data)
         self.tokenizer = dataset_generator.tokenizer
         self.vocab_size = dataset_generator.vocab_size
         self.number_labels = dataset_generator.number_labels
@@ -40,7 +40,7 @@ class Trainer(BaseTensorflowModel):
         if self.use_comet and self.api_key and self.project_name and self.workspace:
             experiment = Experiment(api_key=self.api_key, project_name=self.project_name, workspace=self.workspace)
             experiment.log_dataset_hash(self.train_dataset)
-            experiment.add_tags([str(self.architecture), "word_prediction", f"nb_labels_{self.number_labels}"])
+            experiment.add_tags([str(self.architecture), "text_generation", f"nb_labels_{self.number_labels}"])
             with experiment.train():
                 hist = self.model.fit_dataset(self.train_dataset, self.val_dataset, self.epochs)
             experiment.end()

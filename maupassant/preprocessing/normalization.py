@@ -1,6 +1,6 @@
 import re
 import emot
-import contractions
+# import contractions
 
 from autocorrect import Speller
 

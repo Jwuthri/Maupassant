@@ -26,7 +26,7 @@ def main():
 
     elif app_mode == "Summarization":
         st.title("Text Summarization")
-        model_name = st.selectbox("Choose the summarizer model", ["TfIdf", "GoogleT5"])
+        model_name = st.selectbox("Choose the text_summarization model", ["TfIdf", "GoogleT5"])
         if model_name == "GoogleT5":
             Summarizer("GoogleT5").main()
         else:

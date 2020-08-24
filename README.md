@@ -172,38 +172,24 @@ Featuring
 Modeling
 ---------
 ###### Text Classification
-```
-* 3 differents predefine models (work in multilanguage):
-    * NN (basic)
-    * CNN_NN (intermediate)
-    * CNN_GRU_NN (advanced)
-* Each models can work with:
-    * 1 feature and predict 1 label
-```
+
 Be careful, the classifier works only with stacked column:
 
-This way works:
+| index | binary   | multi        | single   | feature                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+|-------:|:---------|:-------------|:---------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|  1 | positive | ['positive'] | positive | About some articles you contribute significantly  I know you have contributed to the articles Armenian Genocide and Confiscated Armenian properties in Turkey, and your contribution makes non-Armenians know better about the situation of Armenians in the Ottoman Empire and Republic of Turkey. However, both articles have problems. The former does not include papers and reviews published in International Journal of Armenian Genocide Studies, ... |
+|  2 | negative | ['negative'] | negative |  I'm afraid that you need to help yourself - by following the advice/instruction in FisherQueens unblock decline message above.  That is the only way that you have a chance of getting your block lifted.  talk "                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+|  3 | positive | ['positive'] | positive | Hrmm, gotcha.. I thought it was okay since most of the other leaders in the civilization games have it in their popular culture sections as well... Napoleon, Elizabeth I, Wu Zetian, Boudica, Dido, Nebuchadnezzar II, Harun al-Rashid, George Washington, Alexander the Great, Oda Nobunaga, Askia, Augustus Caesar, Genghis Khan, Gustavus Adolphus, Hiawatha, Kamehameha, Ramkhamhaeng and Sejong all have it listed. — -   "                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+|  4 | negative | ['insult', 'obscene', 'toxic', 'negative'] | negative | COME DUCT-TAKE YOU AND RAPE YOU TILL YOU DIE FUCKHEAD |
+|  5 | positive | ['neutral']  | neutral  | Each alum agrees to  how much information can be released to other alums and to the general public.  Whether you think it is stalking is irrelevant.  I believe you are throwing allegations of stalking because you are a petulant little boy who is stamping his feet because he didn't get his way.  You need metaphorically pantsed, your glasses thumbed, and your milk spilled.  Now go pull some wings off of flies, you weirdo.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
-| feature      | label    |
-|--------------|----------|
-| I love it    | positive |
-| I don't know | neutral  |
-| I hate you   | negative |
-
-This way doesn't works:
-
-| feature      | positive | negative | neutral |
-|--------------|----------|----------|---------|
-| I love it    | 1        | 0        | 0       |
-| I don't know | 0        | 1        | 0       |
-| I hate you   | 0        | 0        | 1       |
 
 ```python
 import os
 
 import pandas as pd
 
-from maupassant.classifier.train import Trainer
+from maupassant.text_classification.train import Trainer
 from maupassant.settings import DATASET_PATH
 
 

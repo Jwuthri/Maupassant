@@ -8,28 +8,21 @@ from comet_ml import Experiment
 import tensorflow as tf
 
 from maupassant.utils import timer
-from maupassant.classifier.model import TensorflowModel
-from maupassant.dataset.tensorflow import TensorflowDataset
-from maupassant.tensorflow_metric_loss_optimizer import f1_loss, f1_score
+from maupassant.tensorflow_metric_loss_optimizer import f1_score
+from maupassant.dataset.labels import LabelEncoding
+from maupassant.text_summarization.model import TensorflowModel
+from maupassant.dataset.pandas import remove_rows_contains_null
 from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE, MODEL_PATH
 
 
 class TrainerHelper(TensorflowModel):
-    """Tool to train model."""
 
-    def __init__(self, label_type, architecture, number_labels, embedding_type):
+    def __init__(self, architecture, embedding_type, text=None):
         self.model = tf.keras.Sequential()
-        super().__init__(label_type, architecture, number_labels, embedding_type)
+        super().__init__(architecture, embedding_type, text)
 
     def compile_model(self):
-        if self.info['label_type'] == "binary-label":
-            self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=[f1_score, "binary_accuracy"])
-        elif self.info['label_type'] == "multi-label":
-            self.model.compile(optimizer="adam", loss=f1_loss,
-                               metrics=[f1_score, "categorical_accuracy", "top_k_categorical_accuracy"])
-        else:
-            self.model.compile(optimizer="adam", loss="sparse_categorical_crossentropy",
-                               metrics=[f1_score, "sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy"])
+        self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=[f1_score, "binary_accuracy"])
 
     @staticmethod
     def callback_func(checkpoint_path, tensorboard_dir=None):
@@ -42,7 +35,7 @@ class TrainerHelper(TensorflowModel):
 
     @timer
     def fit_model(self, train_dataset, val_dataset, epochs=30, callbacks=[]):
-        return self.model.fit(train_dataset, epochs=epochs, validation_data=val_dataset, callbacks=callbacks)
+        return self.model.fit(x=train_dataset[0], y=train_dataset[1], epochs=epochs, validation_data=val_dataset, callbacks=callbacks)
 
     @staticmethod
     def define_paths(classifier, label):
@@ -92,22 +85,40 @@ class TrainerHelper(TensorflowModel):
 class Trainer(TrainerHelper):
 
     def __init__(
-            self, train_df, test_df, val_df, label_type, architecture, feature, label,
-            api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE, use_comet=True, epochs=30,
-            multi_label=True, batch_size=512, buffer_size=512, embedding_type="multilingual"
+        self, train_df, test_df, val_df, architecture, feature, label, text=None,
+        api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE, use_comet=True,
+        batch_size=512, buffer_size=512, embedding_type="multilingual", epochs=30
     ):
+        self.train_df = train_df
+        self.test_df = test_df
+        self.val_df = val_df
         self.epochs = epochs
-        self.label_type = label_type
         self.API_KEY = api_key
         self.PROJECT_NAME = project_name
         self.WORKSPACE = workspace
         self.use_comet = use_comet
         self.label = label
         self.feature = feature
-        self.__dataset__ = TensorflowDataset(feature, label, multi_label, batch_size, buffer_size)
-        self.train_dataset, self.test_dataset, self.val_dataset = self.__dataset__.main(train_df, test_df, val_df)
-        self.label_encoder = {self.label: {"encoder": self.__dataset__.encoder, "label_type": self.label_type, "id": 0}}
-        super().__init__(label_type, architecture, self.__dataset__.nb_classes, embedding_type)
+        self.text = text
+        self.batch_size = batch_size
+        self.buffer_size = buffer_size
+        super().__init__(architecture, embedding_type, text)
+
+    def get_dataset(self, feature, label, text=None):
+        train_dataset = remove_rows_contains_null(self.train_df, feature)
+        train_dataset = remove_rows_contains_null(train_dataset, label)
+        if self.text:
+            train_dataset = remove_rows_contains_null(train_dataset, text)
+        test_dataset = remove_rows_contains_null(self.test_df, feature)
+        test_dataset = remove_rows_contains_null(test_dataset, label)
+        if self.text:
+            test_dataset = remove_rows_contains_null(test_dataset, text)
+        val_dataset = remove_rows_contains_null(self.val_df, feature)
+        val_dataset = remove_rows_contains_null(val_dataset, label)
+        if self.text:
+            val_dataset = remove_rows_contains_null(val_dataset, text)
+
+        return train_dataset, test_dataset, val_dataset
 
     def main(self):
         self.set_model()
@@ -115,30 +126,58 @@ class Trainer(TrainerHelper):
         paths = self.define_paths(self.label_type, self.label)
         os.mkdir(paths['path'])
         experiment = None
+        train_dataset, test_dataset, val_dataset = self.get_dataset(self.label, self.feature, self.text)
+        le = LabelEncoding(False)
+        le.fit_encoder(train_dataset[self.label].values)
+        label_encoder = {self.label: {"encoder": le.encoder, "label_type": "binary-label", "id": 0}}
+
+        if self.text:
+            train_dataset = (
+                {"input_sentences": train_dataset[self.feature].values, "input_text": train_dataset[self.text].values},
+                {"is_relevant": train_dataset[self.label].values}
+            )
+            val_dataset = (
+                {"input_sentences": val_dataset[self.feature].values, "input_text": val_dataset[self.text].values},
+                {"is_relevant": val_dataset[self.label].values}
+            )
+        else:
+            train_dataset = (
+                {"input_sentences": train_dataset[self.feature].values},
+                {"is_relevant": train_dataset[self.label].values}
+            )
+            val_dataset = (
+                {"input_sentences": val_dataset[self.feature].values},
+                {"is_relevant": val_dataset[self.label].values}
+            )
+        del self.train_df
+        del self.test_df
+        del self.val_df
 
         if self.use_comet and self.API_KEY:
             experiment = Experiment(api_key=self.API_KEY, project_name=self.PROJECT_NAME, workspace=self.WORKSPACE)
-            experiment.log_dataset_hash(self.train_dataset)
+            experiment.log_dataset_hash(train_dataset)
             experiment.add_tags(['tensorflow', self.label, self.architecture, self.embedding_type])
-            experiment.log_parameters(dict(enumerate(self.__dataset__.encoder.classes_)))
             with experiment.train():
-                history = self.fit_model(self.train_dataset, self.val_dataset, epochs=self.epochs)
+                history = self.fit_model(train_dataset, val_dataset, epochs=self.epochs)
         elif self.use_comet:
             raise Exception("Please provide an api_key, project_name and workspace for comet_ml")
         else:
             callbacks = self.callback_func(
                 tensorboard_dir=paths['tensorboard_path'], checkpoint_path=paths['checkpoint_path']
             )
-            history = self.fit_model(self.train_dataset, self.val_dataset, epochs=self.epochs, callbacks=callbacks)
+            history = self.fit_model(train_dataset, val_dataset, epochs=self.epochs, callbacks=callbacks)
         loss = history.history["loss"]
         val_loss = history.history["val_loss"]
         macro_f1 = history.history["macro_f1"]
         val_macro_f1 = history.history["val_macro_f1"]
         metrics = {"loss": loss, "val_loss": val_loss, "macro_f1": macro_f1, "val_macro_f1": val_macro_f1}
         metrics = {metric: [round(float(value), 5) for value in values] for metric, values in metrics.items()}
+        self.info['label'] = self.label
+        self.info['first_input'] = self.feature
+        self.info['second_label'] = self.text
 
         self.export_model(paths['model_path'], self.model)
-        self.export_encoder(paths['path'], self.label_encoder)
+        self.export_encoder(paths['path'], label_encoder)
         self.export_model_plot(paths['model_plot'], self.model)
         self.export_info(paths["model_info"], self.info)
         self.export_metrics(paths["metrics_path"], metrics)
@@ -159,16 +198,16 @@ if __name__ == '__main__':
     from sklearn.utils import shuffle
     from maupassant.settings import DATASET_PATH
 
-    train_path = os.path.join(DATASET_PATH, "train_phrase_label2.csv")
-    test_path = os.path.join(DATASET_PATH, "test_phrase_label2.csv")
-    val_path = os.path.join(DATASET_PATH, "val_phrase_label2.csv")
+    train_path = os.path.join(DATASET_PATH, "one_to_one", "train_summarization.csv")
+    test_path = os.path.join(DATASET_PATH, "one_to_one", "val_summarization.csv")
+    val_path = os.path.join(DATASET_PATH, "one_to_one", "val_summarization.csv")
 
     train_df = shuffle(pd.read_csv(train_path))
     test_df = shuffle(pd.read_csv(test_path))
     val_df = shuffle(pd.read_csv(val_path))
 
     train = Trainer(
-        train_df, test_df, val_df, "single-label", "CNN", "text", "label",
-        epochs=10, multi_label=False, batch_size=512, buffer_size=512
+        train_df, test_df, val_df, architecture="CNN_LSTM", feature="sentences", label="is_relevant", text=None,
+        epochs=2, batch_size=1024, buffer_size=1024
     )
     model_path = train.main()

@@ -29,7 +29,7 @@ class Predicter(BaseTensorflowModel):
         input_size = info.get('input_size', 0)
         vocab_size = info.get('vocab_size', 0)
         embedding_size = info.get('embedding_size')
-        super().__init__(label_type, architecture, number_labels, pretrained_embedding, base_path, "word_prediction", False)
+        super().__init__(label_type, architecture, number_labels, pretrained_embedding, base_path, "text_generation", False)
         self.model = self.build_model(input_size, embedding_size, vocab_size)
         self.model = self.load_weights(self.model)
         self.tokenizer = self.load_tokenizer()
@@ -131,7 +131,7 @@ class Predicter(BaseTensorflowModel):
 
         return text, scores, tokens
 
-    def generate(self, x, max_predictions=10):
+    def generate(self, x, max_predictions=100):
         text = x
         text, _, _ = self.word_completion(text)
         text, _, _ = self.next_words(text, threshold=0.0, max_predictions=max_predictions)
@@ -139,10 +139,11 @@ class Predicter(BaseTensorflowModel):
 
         return predicted_text
 
-    def predict(self, x):
+    def predict(self, x, completion_threshold=0.2, prediction_threshold=0.3, max_predictions=5):
         text = x
-        text, completion_score, completion_token = self.word_completion(text)
-        text, next_word_scores, next_word_tokens = self.next_words(text)
+        text, completion_score, completion_token = self.word_completion(text, threshold=completion_threshold)
+        text, next_word_scores, next_word_tokens = self.next_words(
+            text, threshold=prediction_threshold, max_predictions=max_predictions)
         predicted_text = text[len(x) :]
         scores = completion_score + next_word_scores
         tokens = completion_token + next_word_tokens
@@ -150,5 +151,6 @@ class Predicter(BaseTensorflowModel):
         return predicted_text, scores, tokens
 
 if __name__ == '__main__':
-    predicter = Predicter(MODEL_PATH, "model_12323")
-    predicter.predict(["Bonjour, je voulais"])
+    predicter = Predicter(MODEL_PATH, "model_path")
+    predicter.predict("Bonjour, je voulais")
+    predicter.generate("Bonjour, je voulais")

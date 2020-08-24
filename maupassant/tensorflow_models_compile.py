@@ -11,7 +11,7 @@ tf.compat.v1.disable_control_flow_v2()
 
 class BaseTensorflowModel(ModelSaverLoader):
 
-    def __init__(self, label_type, architecture, number_labels, pretrained_embedding, base_path=MODEL_PATH, name="classifier", model_load=False):
+    def __init__(self, label_type, architecture, number_labels, pretrained_embedding, base_path=MODEL_PATH, name="text_classification", model_load=False):
         super().__init__(base_path, name, model_load)
         self.label_type = label_type
         self.architecture = architecture
