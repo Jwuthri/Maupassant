@@ -13,8 +13,9 @@ class PretrainedEmbedding(object):
 
     def get_model(self):
         bert_module = "https://tfhub.dev/google/universal-sentence-encoder-multilingual/3"
+        embedding_model = hub.load(bert_module)
 
-        return hub.KerasLayer(bert_module, input_shape=[], dtype=tf.string, trainable=False, name=self.name)
+        return hub.KerasLayer(embedding_model, input_shape=[], dtype=tf.string, trainable=False, name=self.name)
 
     @predict_format
     def predict_one(self, x):

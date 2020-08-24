@@ -65,7 +65,10 @@ class BuildDataset(LabelEncoding):
     @timer
     def generate(self, data, x, y):
         cleaned = self.clean_texts(data, x)
-        cleaned = self.clean_labels(cleaned, y)
+        if self.multi_label:
+            cleaned = self.clean_labels(cleaned, y)
+        else:
+            cleaned['cleaned_labels'] = cleaned[y]
         X, y = cleaned["cleaned_texts"].values, cleaned["cleaned_labels"].values
         X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.1, random_state=42)
 

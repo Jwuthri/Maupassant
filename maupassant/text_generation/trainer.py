@@ -32,7 +32,7 @@ class Trainer(BaseTensorflowModel):
         self.workspace = workspace
         self.epochs = epochs
         super().__init__("multi-class", architecture, self.number_labels, False, base_path, name, False)
-        self.model = self.build_model(self.input_shape, embedding_size=self.embedding_size, vocab_size=self.vocab_size)
+        self.build_model(self.input_shape, embedding_size=self.embedding_size, vocab_size=self.vocab_size)
         self.compile_model()
 
     def train(self):
@@ -42,7 +42,7 @@ class Trainer(BaseTensorflowModel):
             experiment.log_dataset_hash(self.train_dataset)
             experiment.add_tags([str(self.architecture), "text_generation", f"nb_labels_{self.number_labels}"])
             with experiment.train():
-                hist = self.model.fit_dataset(self.train_dataset, self.val_dataset, self.epochs)
+                hist = self.fit_dataset(self.train_dataset, self.val_dataset, self.epochs)
             experiment.end()
         elif self.use_comet:
             raise Exception("Please provide an api_key, project_name and workspace for comet_ml")
