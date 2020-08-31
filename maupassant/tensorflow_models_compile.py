@@ -72,6 +72,8 @@ class BaseTensorflowModel(ModelSaverLoader):
                 layer = tf.keras.layers.GlobalMaxPooling1D()(layer)
             elif block == "MAX_POOL":
                 layer = tf.keras.layers.MaxPool1D()(layer)
+            elif block == "RESHAPE":
+                layer = tf.keras.layers.Reshape(target_shape=unit)(layer)
         output_layer = self.get_output_layer()(layer)
         self.model = tf.keras.models.Model(inputs=input_layer, outputs=output_layer)
 

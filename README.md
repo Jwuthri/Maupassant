@@ -189,30 +189,40 @@ import os
 
 import pandas as pd
 
-from maupassant.text_classification.train import Trainer
 from maupassant.settings import DATASET_PATH
+from maupassant.dataset.pandas import remove_rows_contains_null
+from maupassant.text_classification.trainer import Trainer
+
+dataset_path = os.path.join(DATASET_PATH, "sentiment.csv")
+dataset = pd.read_csv(dataset_path)
+# ['binary-class', 'multi-label', 'multi-class']
 
 
-train_path = os.path.join(DATASET_PATH, "sentiment_train.csv")
-test_path = os.path.join(DATASET_PATH, "sentiment_test.csv")
-val_path = os.path.join(DATASET_PATH, "sentiment_val.csv")
-train_df = pd.read_csv(train_path)
-test_df = pd.read_csv(test_path)
-val_df = pd.read_csv(val_path)
-
-# To train binary model which predict only 1 classe over 2, here the example predict positive/negative
-train = Trainer(train_df, test_df, val_df, "binary-label", "CNN_NN", "feature", "binary", epochs=5, multi_label=False)
-model_path = train.main()
+# Binary classifier
+x, y, label_type, epochs = "feature", "binary", "binary-class", 2
+dataset = remove_rows_contains_null(dataset, x)
+dataset = remove_rows_contains_null(dataset, y)
+architecture = [('DENSE', 256), ("DROPOUT", 0.2), ('DENSE', 128)]
+trainer = Trainer(dataset, x, y, label_type, architecture, epochs=epochs, use_comet=True)
+trainer.train()
 # results = ["Ok": "positive", "I don't like this": "negative", "I like it": "positive", "Fuck you": "negative"]
 
-# To train model which can predict 1 classe over (n), here the example predict insult/negative/neutral/obscene/offensive/positive/toxic
-train = Trainer(train_df, test_df, val_df, "single-label", "CNN_NN", "feature", "single", epochs=5, multi_label=False)
-model_path = train.main()
+# Single label classifier
+x, y, label_type, epochs = "feature", "single", "multi-class", 2
+dataset = remove_rows_contains_null(dataset, x)
+dataset = remove_rows_contains_null(dataset, y)
+architecture = [('CNN', 256), ("DROPOUT", 0.2), ('DENSE', 128)]
+trainer = Trainer(dataset, x, y, label_type, architecture, epochs=epochs, use_comet=True)
+trainer.train()
 # results = ["Ok": "neutral", "I don't like this": "negative", "I like it": "positive", "Fuck you": "insult"]
 
-# To train multi-label model which can predict (n) classes over (n), here the example insult/negative/neutral/obscene/offensive/positive/toxic
-train = Trainer(train_df, test_df, val_df, "multi-label", "CNN_GRU_NN", "feature", "multi", epochs=5, multi_label=True)
-model_path = train.main()
+# Multi label classifier
+x, y, label_type, epochs = "feature", "multi", "multi-label", 2
+dataset = remove_rows_contains_null(dataset, x)
+dataset = remove_rows_contains_null(dataset, y)
+architecture = [('LSTM', 256), ("DROPOUT", 0.2), ('DENSE', 128)]
+trainer = Trainer(dataset, x, y, label_type, architecture, epochs=epochs, use_comet=True)
+trainer.train()
 # results = ["Ok": "neutral", "I don't like this": "negative", "I like it": "positive", "Fuck you": ("negative", "toxic", "insult")]
 ```
 ###### Text Extraction
