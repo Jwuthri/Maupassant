@@ -14,9 +14,10 @@ from maupassant.preprocessing.normalization import TextNormalization
 
 class BuildDataset(object):
 
-    def __init__(self, input_shape=64, max_labels=5000, batch_size=512, buffer_size=512):
+    def __init__(self, input_shape=64, max_labels=None, num_words=35000, batch_size=512, buffer_size=512):
         self.input_shape = input_shape
-        self.max_labels = max_labels
+        self.num_words = num_words
+        self.max_labels = num_words if not max_labels else max_labels
         self.buffer_size = buffer_size
         self.batch_size = batch_size
         self.tokenizer = Tokenizer(filters='', num_words=35000, oov_token='[UNK]')
@@ -101,7 +102,7 @@ class BuildDataset(object):
         text = " ".join(cleaned_data)
         self.set_tokenizer(text)
         labels = self.predictable_words()
-        train, val = train_test_split(cleaned_data, test_size=0.2, random_state=42)
+        train, val = train_test_split(cleaned_data, test_size=0.1, random_state=42)
         train_dataset = self.create_dataset(cleaned_data, labels, dataset_name="train")
         val_dataset = self.create_dataset(val, labels, dataset_name="validation")
 

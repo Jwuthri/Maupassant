@@ -225,17 +225,33 @@ trainer = Trainer(dataset, x, y, label_type, architecture, epochs=epochs, use_co
 trainer.train()
 # results = ["Ok": "neutral", "I don't like this": "negative", "I like it": "positive", "Fuck you": ("negative", "toxic", "insult")]
 ```
+###### Text Generation
+
+```python
+import os
+import pandas as pd
+
+from maupassant.settings import DATASET_PATH
+from maupassant.dataset.pandas import remove_rows_contains_null
+from maupassant.text_generation.trainer import Trainer
+
+dataset_path = os.path.join(DATASET_PATH, "sentiment.csv")
+dataset = pd.read_csv(dataset_path)
+dataset = remove_rows_contains_null(dataset, "feature")
+architecture = [('RNN', 512), ('DENSE', 1024)]
+input_shape, embedding_size, epochs, number_labels_max = 64, 128, 2, 5000
+
+data = dataset['feature'].values
+trainer = Trainer(
+    architecture, number_labels_max, data, input_shape=input_shape, embedding_size=embedding_size, epochs=epochs
+)
+trainer.train()
+# results = #TODO
+```
+
 ###### Text Extraction
 ```
-* 3 differents predefine models (work in multilanguage):
-    * NN (basic)
-    * GRU (intermediate)
-    * CNN (intermediate)
-    * CNN_LSTM (advanced)
-    * CNN_GRU (advanced)
-* Each models can work with:
-    * 1 feature and predict 1 label, binary-label
-    * 2 features and prediction 1 label, binary-label
+* Find the most relevants sentences in a text
 ```
 ###### Text Similarity
 ```

@@ -56,6 +56,12 @@ class BaseTensorflowModel(ModelSaverLoader):
         for block, unit in self.architecture:
             if block == "CNN":
                 layer = tf.keras.layers.Conv1D(unit, kernel_size=3, strides=1, padding='same', activation='relu')(layer)
+            elif block == "LCNN":
+                layer = tf.keras.layers.LocallyConnected1D(
+                    unit, kernel_size=3, strides=1, padding='valid', activation='relu'
+                )(layer)
+            elif block == "CudaLSTM":
+                layer = tf.compat.v1.keras.layers.CuDNNLSTM(unit)(layer)
             elif block == "LSTM":
                 layer = tf.keras.layers.LSTM(unit, activation='relu')(layer)
             elif block == "GRU":

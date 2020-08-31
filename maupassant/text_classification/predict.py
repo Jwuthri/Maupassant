@@ -53,8 +53,6 @@ class Predicter(BaseTensorflowModel):
         text = self.split_text(text)
         text = self.normalizer.replace_char_rep(text=text)
         text = self.normalizer.replace_words_rep(text=text)
-        text = self.normalizer.text_demojis(text=text)
-        text = self.normalizer.text_demoticons(text=text)
         text = self.normalizer.remove_multiple_spaces(text=text)
         text = text.strip()
 
