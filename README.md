@@ -228,6 +228,12 @@ trainer.train()
 ```
 ###### Text Generation
 
+```
+* Predict the next "n" words for a given input text, also able to complet a word.
+    (ex: I am very => I am very happy about this)    
+    (ex: I am v => I am very happy about this)
+```
+
 ```python
 import os
 import pandas as pd
