@@ -10,7 +10,7 @@
 ![Python package](https://github.com/Jwuthri/Maupassant/workflows/Python%20package/badge.svg)
 -----------------
 
-Maupassant is a suite of open source Python module for Natural Language. All the modules are really easy to use, but at the same time you can tune them easily. 
+Maupassant is a suite of open source Python module for Natural Language. All the modules are easy to use, also you can tune them easily. 
 
 It can help you in differents ways:
 
