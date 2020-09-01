@@ -18,8 +18,9 @@ tf.compat.v1.disable_control_flow_v2()
 
 class Predicter(BaseTensorflowModel):
 
-    def __init__(self, base_path=MODEL_PATH, name='model_name', max_words=20000):
+    def __init__(self, base_path=MODEL_PATH, name='model_name', max_words=20000, cleaning_func=None):
         self.normalizer = TextNormalization()
+        self.cleaning_func = cleaning_func
         msl = ModelSaverLoader(base_path, name, True)
         info = msl.load_info()
         label_type = info.get('label_type')
@@ -43,6 +44,7 @@ class Predicter(BaseTensorflowModel):
             "!", "@", "#", "$", "%", "^", "&", "\\(", "\\)", "_", "-", ",", "<", "\\.",
             ">", "\\?", "`", "~", ":", ";", "\\+", "=", "[", "]", "{", "}", "\n{2,}", "\\s"
         ])
+        _ = self.predict(" ")
 
     def split_text(self, text):
         text = text.lower()
@@ -55,6 +57,8 @@ class Predicter(BaseTensorflowModel):
         text = self.normalizer.replace_words_rep(text=text)
         text = self.normalizer.text_demojis(text=text)
         text = self.normalizer.text_demoticons(text=text)
+        if self.cleaning_func:
+            text = self.cleaning_func(text)
         text = self.normalizer.remove_multiple_spaces(text=text)
         text = text.strip()
 
@@ -150,7 +154,8 @@ class Predicter(BaseTensorflowModel):
 
         return predicted_text, scores, tokens
 
+
 if __name__ == '__main__':
-    predicter = Predicter(MODEL_PATH, "model_path")
-    predicter.predict("Bonjour, je voulais")
-    predicter.generate("Bonjour, je voulais")
+    predicter = Predicter(MODEL_PATH, "2020_08_02_19_16_52_text_generation")
+    predicter.predict("Bonjour, je voulais", max_predictions=3)
+    predicter.generate("Bonjour, je voulais", max_predictions=100)

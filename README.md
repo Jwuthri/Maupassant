@@ -180,7 +180,7 @@ Be careful, the classifier works only with stacked column:
 |  1 | positive | ['positive'] | positive | About some articles you contribute significantly  I know you have contributed to the articles Armenian Genocide and Confiscated Armenian properties in Turkey, and your contribution makes non-Armenians know better about the situation of Armenians in the Ottoman Empire and Republic of Turkey. However, both articles have problems. The former does not include papers and reviews published in International Journal of Armenian Genocide Studies, ... |
 |  2 | negative | ['negative'] | negative |  I'm afraid that you need to help yourself - by following the advice/instruction in FisherQueens unblock decline message above.  That is the only way that you have a chance of getting your block lifted.  talk "                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 |  3 | positive | ['positive'] | positive | Hrmm, gotcha.. I thought it was okay since most of the other leaders in the civilization games have it in their popular culture sections as well... Napoleon, Elizabeth I, Wu Zetian, Boudica, Dido, Nebuchadnezzar II, Harun al-Rashid, George Washington, Alexander the Great, Oda Nobunaga, Askia, Augustus Caesar, Genghis Khan, Gustavus Adolphus, Hiawatha, Kamehameha, Ramkhamhaeng and Sejong all have it listed. — -   "                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-|  4 | negative | ['insult', 'obscene', 'toxic', 'negative'] | negative | COME DUCT-TAKE YOU AND RAPE YOU TILL YOU DIE FUCKHEAD |
+|  4 | negative | ['insult', 'obscene', 'toxic', 'negative'] | insult | COME DUCT-TAKE YOU AND RAPE YOU TILL YOU DIE FUCKHEAD |
 |  5 | positive | ['neutral']  | neutral  | Each alum agrees to  how much information can be released to other alums and to the general public.  Whether you think it is stalking is irrelevant.  I believe you are throwing allegations of stalking because you are a petulant little boy who is stamping his feet because he didn't get his way.  You need metaphorically pantsed, your glasses thumbed, and your milk spilled.  Now go pull some wings off of flies, you weirdo.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 
@@ -189,43 +189,68 @@ import os
 
 import pandas as pd
 
-from maupassant.text_classification.train import Trainer
 from maupassant.settings import DATASET_PATH
+from maupassant.dataset.pandas import remove_rows_contains_null
+from maupassant.text_classification.trainer import Trainer
 
+dataset_path = os.path.join(DATASET_PATH, "sentiment.csv")
+dataset = pd.read_csv(dataset_path)
+# possible label_type: ['binary-class', 'multi-label', 'multi-class']
 
-train_path = os.path.join(DATASET_PATH, "sentiment_train.csv")
-test_path = os.path.join(DATASET_PATH, "sentiment_test.csv")
-val_path = os.path.join(DATASET_PATH, "sentiment_val.csv")
-train_df = pd.read_csv(train_path)
-test_df = pd.read_csv(test_path)
-val_df = pd.read_csv(val_path)
-
-# To train binary model which predict only 1 classe over 2, here the example predict positive/negative
-train = Trainer(train_df, test_df, val_df, "binary-label", "CNN_NN", "feature", "binary", epochs=5, multi_label=False)
-model_path = train.main()
+# Binary classifier
+x, y, label_type, epochs = "feature", "binary", "binary-class", 2
+dataset = remove_rows_contains_null(dataset, x)
+dataset = remove_rows_contains_null(dataset, y)
+architecture = [('DENSE', 256), ("DROPOUT", 0.2), ('DENSE', 128)]
+trainer = Trainer(dataset, x, y, label_type, architecture, epochs=epochs, use_comet=True)
+trainer.train()
 # results = ["Ok": "positive", "I don't like this": "negative", "I like it": "positive", "Fuck you": "negative"]
 
-# To train model which can predict 1 classe over (n), here the example predict insult/negative/neutral/obscene/offensive/positive/toxic
-train = Trainer(train_df, test_df, val_df, "single-label", "CNN_NN", "feature", "single", epochs=5, multi_label=False)
-model_path = train.main()
+# Single label classifier
+x, y, label_type, epochs = "feature", "single", "multi-class", 2
+dataset = remove_rows_contains_null(dataset, x)
+dataset = remove_rows_contains_null(dataset, y)
+architecture = [('CNN', 256), ("DROPOUT", 0.2), ('DENSE', 128)]
+trainer = Trainer(dataset, x, y, label_type, architecture, epochs=epochs, use_comet=True)
+trainer.train()
 # results = ["Ok": "neutral", "I don't like this": "negative", "I like it": "positive", "Fuck you": "insult"]
 
-# To train multi-label model which can predict (n) classes over (n), here the example insult/negative/neutral/obscene/offensive/positive/toxic
-train = Trainer(train_df, test_df, val_df, "multi-label", "CNN_GRU_NN", "feature", "multi", epochs=5, multi_label=True)
-model_path = train.main()
+# Multi label classifier
+x, y, label_type, epochs = "feature", "multi", "multi-label", 2
+dataset = remove_rows_contains_null(dataset, x)
+dataset = remove_rows_contains_null(dataset, y)
+architecture = [('LSTM', 256), ("DROPOUT", 0.2), ('DENSE', 128)]
+trainer = Trainer(dataset, x, y, label_type, architecture, epochs=epochs, use_comet=True)
+trainer.train()
 # results = ["Ok": "neutral", "I don't like this": "negative", "I like it": "positive", "Fuck you": ("negative", "toxic", "insult")]
 ```
+###### Text Generation
+
+```python
+import os
+import pandas as pd
+
+from maupassant.settings import DATASET_PATH
+from maupassant.dataset.pandas import remove_rows_contains_null
+from maupassant.text_generation.trainer import Trainer
+
+dataset_path = os.path.join(DATASET_PATH, "sentiment.csv")
+dataset = pd.read_csv(dataset_path)
+dataset = remove_rows_contains_null(dataset, "feature")
+architecture = [('RNN', 512), ('DENSE', 1024)]
+input_shape, embedding_size, epochs, number_labels_max = 64, 128, 2, 5000
+
+data = dataset['feature'].values
+trainer = Trainer(
+    architecture, number_labels_max, data, input_shape=input_shape, embedding_size=embedding_size, epochs=epochs
+)
+trainer.train()
+# results = #TODO
+```
+
 ###### Text Extraction
 ```
-* 3 differents predefine models (work in multilanguage):
-    * NN (basic)
-    * GRU (intermediate)
-    * CNN (intermediate)
-    * CNN_LSTM (advanced)
-    * CNN_GRU (advanced)
-* Each models can work with:
-    * 1 feature and predict 1 label, binary-label
-    * 2 features and prediction 1 label, binary-label
+* Find the most relevants sentences in a text
 ```
 ###### Text Similarity
 ```
