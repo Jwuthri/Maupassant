@@ -32,8 +32,8 @@ class SequenceTokenization(object):
         return TreebankWordDetokenizer().detokenize(sentences)
 
 
-def get_text_tokenizer(text):
-    tokenizer = Tokenizer(filters='')
+def text_tokenizer(text, filters='', num_words= 10000, lower=True, char_level=False, oov_token="[UNK]"):
+    tokenizer = Tokenizer(filters=filters, num_words=num_words, lower=lower, char_level=char_level, oov_token=oov_token)
     tokenizer.fit_on_texts([text])
 
     return tokenizer

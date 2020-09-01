@@ -20,10 +20,10 @@ setup(
         "pandas==1.0.1",
         "pydot==1.4.1",
         "pytest==5.2.0",
-        "scikit-learn==0.20.2",
+        "scikit-learn==0.23.0",
         "streamlit==0.56.0",
         "umap-learn==0.3.10",
-        "contractions==0.0.24",
+        # "contractions==0.0.24",
         "python-dotenv==0.12.0"
     ]
 )
