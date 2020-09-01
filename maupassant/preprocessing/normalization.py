@@ -77,9 +77,9 @@ class TextNormalization(object):
 
         return text
 
-    @staticmethod
-    def text_decontraction(text):
-        return contractions.fix(text)
+    # @staticmethod
+    # def text_decontraction(text):
+    #     return contractions.fix(text)
 
     @staticmethod
     def spec_add_spaces(text):
