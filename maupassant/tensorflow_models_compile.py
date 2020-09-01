@@ -58,8 +58,13 @@ class BaseTensorflowModel(ModelSaverLoader):
                 layer = tf.keras.layers.Conv1D(unit, kernel_size=3, strides=1, padding='same', activation='relu')(layer)
             elif block == "LCNN":
                 layer = tf.keras.layers.LocallyConnected1D(
-                    unit, kernel_size=3, strides=1, padding='valid', activation='relu'
-                )(layer)
+                    unit, kernel_size=3, strides=1, padding='valid', activation='relu')(layer)
+            elif block == "BiLSTM":
+                layer = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(unit, activation="relu"))(layer)
+            elif block == "BiGRU":
+                layer = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(unit, activation="relu"))(layer)
+            elif block == "BiRNN":
+                layer = tf.keras.layers.Bidirectional(tf.keras.layers.SimpleRNN(unit, activation="relu"))(layer)
             elif block == "CudaLSTM":
                 layer = tf.compat.v1.keras.layers.CuDNNLSTM(unit)(layer)
             elif block == "LSTM":
