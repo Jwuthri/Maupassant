@@ -1,2 +1,2 @@
-Text summarization
-==================
+Summarizer
+==========

@@ -1,3 +1,4 @@
+import re
 import string
 import operator
 
@@ -7,7 +8,7 @@ import tensorflow as tf
 import numpy as np
 
 from maupassant.settings import MODEL_PATH
-from maupassant.utils import ModelSaverLoader, text_format, timer
+from maupassant.utils import ModelSaverLoader
 from maupassant.preprocessing.normalization import TextNormalization
 from maupassant.tensorflow_models_compile import BaseTensorflowModel
 
@@ -15,9 +16,9 @@ tf.compat.v1.disable_eager_execution()
 tf.compat.v1.disable_control_flow_v2()
 
 
-class Predictor(BaseTensorflowModel):
+class Predicter(BaseTensorflowModel):
 
-    def __init__(self, base_path=MODEL_PATH, name='model_name', max_words=10000, cleaning_func=None):
+    def __init__(self, base_path=MODEL_PATH, name='model_name', max_words=20000, cleaning_func=None):
         self.normalizer = TextNormalization()
         self.cleaning_func = cleaning_func
         msl = ModelSaverLoader(base_path, name, True)
@@ -29,7 +30,7 @@ class Predictor(BaseTensorflowModel):
         input_size = info.get('input_size', 0)
         vocab_size = info.get('vocab_size', 0)
         embedding_size = info.get('embedding_size')
-        super().__init__(label_type, architecture, number_labels, pretrained_embedding, base_path, name, True)
+        super().__init__(label_type, architecture, number_labels, pretrained_embedding, base_path, "text_generation", False)
         self.model = self.build_model(input_size, embedding_size, vocab_size)
         self.model = self.load_weights(self.model)
         self.tokenizer = self.load_tokenizer()
@@ -39,8 +40,19 @@ class Predictor(BaseTensorflowModel):
         self.end_sentence = ('!', '?', '.', '\n', '\n\n')
         self.no_space_needed = (" ", "\n", "\n\n")
         self.splitter = " "
+        self.delimiters = "|".join([
+            "!", "@", "#", "$", "%", "^", "&", "\\(", "\\)", "_", "-", ",", "<", "\\.",
+            ">", "\\?", "`", "~", ":", ";", "\\+", "=", "[", "]", "{", "}", "\n{2,}", "\\s"
+        ])
+        _ = self.predict(" ")
+
+    def split_text(self, text):
+        text = text.lower()
+
+        return re.sub(r'(' + self.delimiters + ')', r' \1 ', text).strip()
 
     def clean_text(self, text):
+        text = self.split_text(text)
         text = self.normalizer.replace_char_rep(text=text)
         text = self.normalizer.replace_words_rep(text=text)
         text = self.normalizer.text_demojis(text=text)
@@ -59,7 +71,7 @@ class Predictor(BaseTensorflowModel):
         return padded_tokenized_text
 
     def split_text_last_word(self, text):
-        return text.split(self.splitter)[-1], " ".join(text.split(self.splitter)[:-1])
+        return text.split(self.splitter)[-1], text.split(self.splitter)[:-1]
 
     def get_prediction_startwith(self, predictions, word, threshold=0.3):
         tokens_ids = np.where(predictions[0] >= threshold)[0]
@@ -74,21 +86,23 @@ class Predictor(BaseTensorflowModel):
 
         return "", 0.0
 
-    def word_completion(self, text, threshold):
+    def word_completion(self, text, threshold=0.3):
         score, token = 0.0, ""
-        splitted_text = self.normalizer.split_text_for_tokenizer(text)
+        if text[-1] == self.splitter:
+            return text, [score], [token]
+        splitted_text = self.split_text(text)
         last_word, begin_text = self.split_text_last_word(splitted_text)
         cleaned_text = self.clean_text(begin_text)
-        if (last_word or text[-1]) not in self.no_completion:
+        if last_word not in self.no_completion:
             padded_tokenized_text = self.to_sequence(cleaned_text)
             predictions = self.model.predict(padded_tokenized_text)
-            token, score = self.get_prediction_startwith(predictions, last_word, threshold)
+            token, score = self.get_prediction_startwith(predictions,last_word, threshold)
             text += token[len(last_word):]
 
         return text, [score], [token[len(last_word):]]
 
     def next_word(self, text):
-        splitted_text = self.normalizer.split_text_for_tokenizer(text)
+        splitted_text = self.split_text(text)
         last_word = splitted_text.split(self.splitter)[-1]
         cleaned_text = self.clean_text(splitted_text)
         tokenized_text = self.tokenizer.texts_to_sequences([cleaned_text])[0]
@@ -104,8 +118,8 @@ class Predictor(BaseTensorflowModel):
 
         return score, token
 
-    def next_words(self, text, threshold, max_words):
-        scores, tokens, score, number_predicted_words, continue_prediction, lst_token = [], [], 1.0, 0, True, ""
+    def next_words(self, text, threshold=0.4, max_predictions=5):
+        scores, tokens, score, number_predicted_words, continue_prediction = [], [], 1.0, 0, True
         while continue_prediction:
             score_token, token = self.next_word(text)
             score *= score_token
@@ -114,50 +128,34 @@ class Predictor(BaseTensorflowModel):
                 tokens.append(token)
                 number_predicted_words += 1
                 text += token
-            if number_predicted_words == max_words or lst_token == token or score < threshold:
+            else:
                 continue_prediction = False
-            lst_token = token
+            if number_predicted_words == max_predictions:
+                continue_prediction = False
 
         return text, scores, tokens
 
-    @timer
-    def generate(self, x, max_words=100):
-        if x != "":
-            text = x
-            text, _, _ = self.word_completion(text=text, threshold=0)
-            text, _, _ = self.next_words(text=text, threshold=0, max_words=max_words)
-            predicted_text = text[len(x):]
+    def generate(self, x, max_predictions=100):
+        text = x
+        text, _, _ = self.word_completion(text)
+        text, _, _ = self.next_words(text, threshold=0.0, max_predictions=max_predictions)
+        predicted_text = text[len(x) :]
 
-            return predicted_text, text
+        return predicted_text
 
-    @timer
-    def predict(self, x, threshold=0.1, max_words=5):
-        if x != "":
-            text = x
-            text, completion_score, completion_token = self.word_completion(text=text, threshold=threshold)
-            text, next_word_scores, next_word_tokens = self.next_words(text=text, threshold=threshold, max_words=max_words)
-            predicted_text = text[len(x):]
-            scores = completion_score + next_word_scores
-            tokens = completion_token + next_word_tokens
+    def predict(self, x, completion_threshold=0.2, prediction_threshold=0.3, max_predictions=5):
+        text = x
+        text, completion_score, completion_token = self.word_completion(text, threshold=completion_threshold)
+        text, next_word_scores, next_word_tokens = self.next_words(
+            text, threshold=prediction_threshold, max_predictions=max_predictions)
+        predicted_text = text[len(x) :]
+        scores = completion_score + next_word_scores
+        tokens = completion_token + next_word_tokens
 
-            return predicted_text, text, scores, tokens
+        return predicted_text, scores, tokens
 
 
 if __name__ == '__main__':
-    green = text_format(txt_color='green', bg_color=None, txt_style='normal')
-    blue = text_format(txt_color='yellow', bg_color="cyan", txt_style='bold')
-    end_formatting = text_format(end=True)
-    predictor = Predictor(MODEL_PATH, "2020_08_02_11_46_34_word_prediction")
-    _ = predictor.predict(" ")  # Just load the model
-    predicted_text, text, scores, tokens = predictor.predict("Je sui")
-    print(f"""
-        {blue} predicted_text: {green} {repr(predicted_text)} {end_formatting}
-        {blue} text:           {green} {repr(text)} {end_formatting}
-        {blue} score:          {green} {scores} {end_formatting}
-        {blue} token:          {green} {tokens} {end_formatting}
-    """)
-    predicted_text, text = predictor.generate("Je sui")
-    print(f"""
-        {blue} predicted_text: {green} {repr(predicted_text)} {end_formatting}
-        {blue} text:           {green} {repr(text)} {end_formatting}
-    """)
+    predicter = Predicter(MODEL_PATH, "2020_08_02_19_16_52_text_generation")
+    predicter.predict("Bonjour, je voulais", max_predictions=3)
+    predicter.generate("Bonjour, je voulais", max_predictions=100)

@@ -1,6 +1,6 @@
 import streamlit as st
 
-from maupassant.summarizer.predict import Predictor
+from maupassant.text_summarization.predict import Predictor
 
 
 class Summarizer(object):

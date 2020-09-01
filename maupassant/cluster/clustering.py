@@ -27,9 +27,9 @@ class Clustering(ModelSaverLoader):
     @timer
     def fit_model(self, x, n_clusters=5, **kwargs):
         if self.model_name == "HDBSCAN":
-            self.model = self.model(**kwargs).fit(x)
+            self.model = self.model(**kwargs).fit_model(x)
         else:
-            self.model = self.model(n_clusters=n_clusters, **kwargs).fit(x)
+            self.model = self.model(n_clusters=n_clusters, **kwargs).fit_model(x)
 
     def predict(self, x):
         if self.model_name == "KMEANS":
@@ -73,3 +73,5 @@ class Elbow(object):
         plt.ylabel('Distortion')
         plt.title('The Elbow Method showing the optimal n_clusters')
         plt.show()
+
+

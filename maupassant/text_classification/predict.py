@@ -1,23 +1,15 @@
 import tensorflow as tf
 
 from maupassant.settings import MODEL_PATH
+from maupassant.utils import ModelSaverLoader, predict_format, timer
 from maupassant.preprocessing.normalization import TextNormalization
 from maupassant.tensorflow_models_compile import BaseTensorflowModel
-from maupassant.utils import ModelSaverLoader, text_format, predict_format, timer
 
 tf.compat.v1.disable_eager_execution()
 tf.compat.v1.disable_control_flow_v2()
 
-try:
-    tf.config.set_visible_devices([], "GPU")
-    visible_devices = tf.config.get_visible_devices()
-    for device in visible_devices:
-        assert device.device_type != "GPU"
-except:
-    pass
 
-
-class Predictor(BaseTensorflowModel):
+class Predicter(BaseTensorflowModel):
 
     def __init__(self, base_path=MODEL_PATH, name='model_name', cleaning_func=None):
         self.normalizer = TextNormalization()
@@ -34,12 +26,11 @@ class Predictor(BaseTensorflowModel):
         self.model = self.load_weights(self.model)
         self.encoder = self.load_encoder()
         self.classes = self.encoder.classes_
+        _ = self.predict(" ")
 
     def clean_text(self, text):
         text = self.normalizer.replace_char_rep(text=text)
         text = self.normalizer.replace_words_rep(text=text)
-        text = self.normalizer.text_demojis(text=text)
-        text = self.normalizer.text_demoticons(text=text)
         if self.cleaning_func:
             text = self.cleaning_func(text)
         text = self.normalizer.remove_multiple_spaces(text=text)
@@ -66,14 +57,5 @@ class Predictor(BaseTensorflowModel):
 
 
 if __name__ == '__main__':
-    green = text_format(txt_color='green', bg_color=None, txt_style='normal')
-    blue = text_format(txt_color='yellow', bg_color="cyan", txt_style='bold')
-    end_formatting = text_format(end=True)
-    predictor = Predictor(MODEL_PATH, "2020_08_02_19_16_52_text_classification")
-    text = "bonjour je suis pas la"
-    _ = predictor.predict(" ")  # Just load the model
-    classes = predictor.predict(text)
-    print(f"""
-        {blue} classes: {green} {repr(classes)} {end_formatting}
-        {blue} text:    {green} {repr(text)} {end_formatting}
-    """)
+    predicter = Predicter(MODEL_PATH, "2020_08_02_19_16_52_text_classification")
+    classes = predicter.predict("You are stupid")

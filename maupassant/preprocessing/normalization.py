@@ -1,10 +1,12 @@
 import re
 import emot
-import contractions
+# import contractions
 
 from autocorrect import Speller
 
-from nltk.stem import PorterStemmer, LancasterStemmer, WordNetLemmatizer
+from nltk.stem import PorterStemmer
+from nltk.stem import LancasterStemmer
+from nltk.stem import WordNetLemmatizer
 from nltk.stem.snowball import SnowballStemmer
 
 from maupassant.preprocessing.tokenization import SentenceTokenization
@@ -12,21 +14,17 @@ from maupassant.preprocessing.tokenization import SentenceTokenization
 
 class TextNormalization(object):
 
-    def __init__(self, stemmer='SnowballStemmer'):
+    def __init__(self, stemmer='PorterStemmer', language='en'):
         self.stemmer = stemmer
         self.lemstem = self.get_lemstem
-        self.checker = Speller(lang="en")
-        self.delimiters = "|".join([
-            "!", "@", "#", "$", "%", "^", "&", "_", "-", ",", "<", ">", "`", "~", ":", ";", "=", "[", "]", "{", "}",
-            "\\+", "\n{2,}", "\\s", "\n", "\\?", "\\.", "\\(", "\\)"
-        ])
+        self.checker = Speller(lang=language)
 
     @property
     def get_lemstem(self):
         if self.stemmer == "WordNetLemmatizer":
             return WordNetLemmatizer()
         elif self.stemmer == "LancasterStemmer":
-            return LancasterStemmer()
+            return LancasterStemmer("english")
         elif self.stemmer == "SnowballStemmer":
             return SnowballStemmer("english", ignore_stopwords=True)
         else:
@@ -48,13 +46,13 @@ class TextNormalization(object):
         return SentenceTokenization().detokenize(stemmed)
 
     @staticmethod
-    def text_demojis(text, to_text=False):
+    def text_demojis(text, how_replace=""):
         emojis = emot.emoji(text)
         if isinstance(emojis, list):
             emojis = emojis[0]
         if emojis['flag']:
             for index in range(len(emojis["value"])):
-                if to_text:
+                if how_replace == 'mean':
                     source = emojis['value'][index]
                     target = emojis['mean'][index].split(':')[1]
                     text = text.replace(source, target)
@@ -64,13 +62,13 @@ class TextNormalization(object):
         return text
 
     @staticmethod
-    def text_demoticons(text, to_text=False):
+    def text_demoticons(text, how_replace=""):
         emoticons = emot.emoticons(text)
         if isinstance(emoticons, list):
             emoticons = emoticons[0]
         if emoticons['flag']:
             for index in range(len(emoticons["value"])):
-                if to_text:
+                if how_replace == 'mean':
                     source = emoticons['value'][index]
                     target = emoticons['mean'][index]
                     text = text.replace(source, target)
@@ -95,9 +93,6 @@ class TextNormalization(object):
     def _replace_group(m):
         c, cc = m.groups()
         return c
-
-    def split_text_for_tokenizer(self, text):
-        return re.sub(f'({self.delimiters})', r' \1 ', text.lower()).strip()
 
     def replace_char_rep(self, text):
         char_rep = re.compile(r'(\S)(\1{2,})')

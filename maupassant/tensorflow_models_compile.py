@@ -1,4 +1,5 @@
 import os
+
 import tensorflow as tf
 
 from maupassant.feature_extraction.pretrained_embedding import PretrainedEmbedding
@@ -11,9 +12,7 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 class BaseTensorflowModel(ModelSaverLoader):
 
-    def __init__(
-            self, label_type, architecture, number_labels, pretrained_embedding,
-            base_path=MODEL_PATH, name="text_classification", model_load=False):
+    def __init__(self, label_type, architecture, number_labels, pretrained_embedding, base_path=MODEL_PATH, name="text_classification", model_load=False):
         super().__init__(base_path, name, model_load)
         self.label_type = label_type
         self.architecture = architecture
@@ -57,6 +56,17 @@ class BaseTensorflowModel(ModelSaverLoader):
         for block, unit in self.architecture:
             if block == "CNN":
                 layer = tf.keras.layers.Conv1D(unit, kernel_size=3, strides=1, padding='same', activation='relu')(layer)
+            elif block == "LCNN":
+                layer = tf.keras.layers.LocallyConnected1D(
+                    unit, kernel_size=3, strides=1, padding='valid', activation='relu')(layer)
+            elif block == "BiLSTM":
+                layer = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(unit, activation="relu"))(layer)
+            elif block == "BiGRU":
+                layer = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(unit, activation="relu"))(layer)
+            elif block == "BiRNN":
+                layer = tf.keras.layers.Bidirectional(tf.keras.layers.SimpleRNN(unit, activation="relu"))(layer)
+            elif block == "CudaLSTM":
+                layer = tf.compat.v1.keras.layers.CuDNNLSTM(unit)(layer)
             elif block == "LSTM":
                 layer = tf.keras.layers.LSTM(unit, activation='relu')(layer)
             elif block == "GRU":
@@ -73,9 +83,10 @@ class BaseTensorflowModel(ModelSaverLoader):
                 layer = tf.keras.layers.GlobalMaxPooling1D()(layer)
             elif block == "MAX_POOL":
                 layer = tf.keras.layers.MaxPool1D()(layer)
+            elif block == "RESHAPE":
+                layer = tf.keras.layers.Reshape(target_shape=unit)(layer)
         output_layer = self.get_output_layer()(layer)
-
-        return tf.keras.models.Model(inputs=input_layer, outputs=[output_layer])
+        self.model = tf.keras.models.Model(inputs=input_layer, outputs=output_layer)
 
     def compile_model(self):
         if self.label_type == "binary-class":
@@ -93,7 +104,7 @@ class BaseTensorflowModel(ModelSaverLoader):
             raise(Exception("Please provide a 'label_type' in ['binary-class', 'multi-label', 'multi-class']"))
 
     @staticmethod
-    def callback_func(checkpoint_path, tensorboard_dir=None):
+    def callback_func(checkpoint_path: str, tensorboard_dir: str=None):
         checkpoint = tf.keras.callbacks.ModelCheckpoint(
             filepath=checkpoint_path, verbose=1, period=1, save_weights_only=True)
         if tensorboard_dir:

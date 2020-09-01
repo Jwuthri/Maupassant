@@ -47,13 +47,12 @@ def timer(func):
         run_time = time.perf_counter() - start_time
         bg_fw = text_format(txt_color='white', bg_color='green', txt_style='bold')
         fc = text_format(txt_color='cyan', txt_style='bold')
-        fr = text_format(txt_color='red', txt_style='bold')
         fb = text_format(txt_color='blue', txt_style='bold')
         end = text_format(end=True)
 
         print(f"{bg_fw}Function:{end}{fc}{func.__name__}{end}")
-        print(f"{bg_fw}kwargs:  {end}{fb}{kwargs}{end}")
-        print(f"{bg_fw}Duration:{end}{fr}{run_time*1000:.3f}ms{end}")
+        print(f"{bg_fw}kwargs:{end}{fb}{kwargs}{end}")
+        print(f"{bg_fw}Duration:{end}{fb}{run_time*1000:.3f}ms{end}")
         return value
 
     return wrapper_timer
@@ -86,11 +85,11 @@ class ModelSaverLoader(object):
         if self.model_load:
             base_dir = os.path.join(self.base_path, self.name)
         else:
-            base_dir = os.path.join(self.base_path, f"{self.name}_{self.date}")
+            base_dir = os.path.join(self.base_path, f"{self.date}_{self.name}")
 
         return {
             "path": base_dir,
-            "weights_path": os.path.join(base_dir, 'weights'),
+            "weights_path":  os.path.join(base_dir, 'weights'),
             "model_path": os.path.join(base_dir, 'model.pkl'),
             "model_plot_path":  os.path.join(base_dir, "model.jpg"),
             "model_info_path": os.path.join(base_dir, "model.json"),
