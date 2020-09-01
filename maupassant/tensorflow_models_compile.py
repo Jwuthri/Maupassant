@@ -1,3 +1,5 @@
+import os
+
 import tensorflow as tf
 
 from maupassant.feature_extraction.pretrained_embedding import PretrainedEmbedding
@@ -5,8 +7,7 @@ from maupassant.tensorflow_metric_loss_optimizer import f1_score, f1_loss
 from maupassant.settings import MODEL_PATH
 from maupassant.utils import ModelSaverLoader
 
-tf.compat.v1.disable_eager_execution()
-tf.compat.v1.disable_control_flow_v2()
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 
 class BaseTensorflowModel(ModelSaverLoader):
@@ -55,6 +56,17 @@ class BaseTensorflowModel(ModelSaverLoader):
         for block, unit in self.architecture:
             if block == "CNN":
                 layer = tf.keras.layers.Conv1D(unit, kernel_size=3, strides=1, padding='same', activation='relu')(layer)
+            elif block == "LCNN":
+                layer = tf.keras.layers.LocallyConnected1D(
+                    unit, kernel_size=3, strides=1, padding='valid', activation='relu')(layer)
+            elif block == "BiLSTM":
+                layer = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(unit, activation="relu"))(layer)
+            elif block == "BiGRU":
+                layer = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(unit, activation="relu"))(layer)
+            elif block == "BiRNN":
+                layer = tf.keras.layers.Bidirectional(tf.keras.layers.SimpleRNN(unit, activation="relu"))(layer)
+            elif block == "CudaLSTM":
+                layer = tf.compat.v1.keras.layers.CuDNNLSTM(unit)(layer)
             elif block == "LSTM":
                 layer = tf.keras.layers.LSTM(unit, activation='relu')(layer)
             elif block == "GRU":
@@ -66,25 +78,27 @@ class BaseTensorflowModel(ModelSaverLoader):
             elif block == "FLATTEN":
                 layer = tf.keras.layers.Flatten()(layer)
             elif block == "DROPOUT":
-                layer = tf.keras.layers.Dropout(0.2)(layer)
+                layer = tf.keras.layers.Dropout(unit)(layer)
             elif block == "GLOBAL_POOL":
                 layer = tf.keras.layers.GlobalMaxPooling1D()(layer)
             elif block == "MAX_POOL":
                 layer = tf.keras.layers.MaxPool1D()(layer)
+            elif block == "RESHAPE":
+                layer = tf.keras.layers.Reshape(target_shape=unit)(layer)
         output_layer = self.get_output_layer()(layer)
         self.model = tf.keras.models.Model(inputs=input_layer, outputs=output_layer)
 
     def compile_model(self):
         if self.label_type == "binary-class":
             self.model.compile(
-                optimizer="nadam", loss="binary_crossentropy", metrics=[f1_score, "binary_accuracy"])
+                optimizer="adam", loss="binary_crossentropy", metrics=[f1_score, "binary_accuracy"])
         elif self.label_type == "multi-label":
             self.model.compile(
-                optimizer="nadam", loss=f1_loss,
+                optimizer="adam", loss=f1_loss,
                 metrics=[f1_score, "categorical_accuracy", "top_k_categorical_accuracy"])
         elif self.label_type == "multi-class":
             self.model.compile(
-                optimizer="nadam", loss="sparse_categorical_crossentropy",
+                optimizer="adam", loss="sparse_categorical_crossentropy",
                 metrics=[f1_score, "sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy"])
         else:
             raise(Exception("Please provide a 'label_type' in ['binary-class', 'multi-label', 'multi-class']"))

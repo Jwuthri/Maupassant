@@ -89,6 +89,7 @@ class ModelSaverLoader(object):
 
         return {
             "path": base_dir,
+            "weights_path":  os.path.join(base_dir, 'weights'),
             "model_path": os.path.join(base_dir, 'model.pkl'),
             "model_plot_path":  os.path.join(base_dir, "model.jpg"),
             "model_info_path": os.path.join(base_dir, "model.json"),
@@ -103,8 +104,8 @@ class ModelSaverLoader(object):
         tf.keras.utils.plot_model(model, to_file=self.paths['model_plot_path'], show_shapes=True)
 
     def export_weights(self, model):
-        model.save_weights(self.paths['path'])
-        print(f"Model has been exported here => {self.paths['path']}")
+        model.save_weights(self.paths['weights_path'])
+        print(f"Model has been exported here => {self.paths['weights_path']}")
 
     def load_weights(self, model):
         latest = tf.train.latest_checkpoint(self.paths['path'])

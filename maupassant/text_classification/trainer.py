@@ -8,8 +8,15 @@ from maupassant.tensorflow_metric_loss_optimizer import get_metrics
 from maupassant.tensorflow_models_compile import BaseTensorflowModel
 from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE, MODEL_PATH
 
-tf.compat.v1.disable_eager_execution()
-tf.compat.v1.disable_control_flow_v2()
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
+try:
+    tf.config.set_visible_devices([], "GPU")
+    visible_devices = tf.config.get_visible_devices()
+    for device in visible_devices:
+        assert device.device_type != "GPU"
+except:
+    pass
 
 
 class Trainer(BaseTensorflowModel):
@@ -20,7 +27,7 @@ class Trainer(BaseTensorflowModel):
         api_key=API_KEY, project_name=PROJECT_NAME, workspace=WORKSPACE, use_comet=True
     ):
         dataset_generator = BuildDataset(label_type=label_type, batch_size=batch_size, buffer_size=buffer_size)
-        self.train_dataset, self.test_dataset, self.val_dataset = dataset_generator.generate(data, x, y)
+        self.train_dataset, self.val_dataset = dataset_generator.generate(data, x, y)
         self.encoder = dataset_generator.encoder
         self.classes_mapping = dataset_generator.classes_mapping
         self.number_labels = dataset_generator.number_labels
@@ -35,7 +42,7 @@ class Trainer(BaseTensorflowModel):
         self.epochs = epochs
         super().__init__(
             label_type, architecture, self.number_labels, self.pretrained_embedding, base_path, name, model_load=False)
-        self.model = self.build_model()
+        self.build_model()
         self.compile_model()
 
     def train(self):
@@ -45,7 +52,7 @@ class Trainer(BaseTensorflowModel):
             experiment.log_dataset_hash(self.train_dataset)
             experiment.add_tags([str(self.architecture), self.name, f"nb_labels_{self.number_labels}"])
             with experiment.train():
-                hist = self.model.fit_dataset(self.train_dataset, self.val_dataset, self.epochs)
+                hist = self.fit_dataset(self.train_dataset, self.val_dataset, self.epochs)
             experiment.end()
         elif self.use_comet:
             raise Exception("Please provide an api_key, project_name and workspace for comet_ml")
@@ -53,14 +60,14 @@ class Trainer(BaseTensorflowModel):
             callbacks = self.callback_func(
                 tensorboard_dir=self.paths['tensorboard_path'], checkpoint_path=self.paths['checkpoint_path']
             )
-            hist = self.model.fit_dataset(self.train_dataset, self.val_dataset, self.epochs, callbacks)
+            hist = self.fit_dataset(self.train_dataset, self.val_dataset, self.epochs, callbacks)
 
         if self.label_type == "binary-class":
-            metric = "binary_crossentropy"
+            metric = "binary_accuracy"
         elif self.label_type == "multi-label":
-            metric = "f1_loss"
+            metric = "f1_score"
         else:
-            metric = "sparse_categorical_crossentropy"
+            metric = "sparse_categorical_accuracy"
 
         metrics = get_metrics(hist, metric)
         self.export_weights(self.model)
@@ -76,11 +83,11 @@ if __name__ == '__main__':
     from maupassant.dataset.pandas import remove_rows_contains_null
 
     dataset_path = os.path.join(DATASET_PATH, "sentiment.csv")
-    dataset = pd.read_csv(dataset_path)
+    dataset = pd.read_csv(dataset_path, nrows=10000)
     # ['binary-class', 'multi-label', 'multi-class']
-    x, y, label_type = "feature", "single", "multi-class"
+    x, y, label_type, epochs = "feature", "binary", "binary-class", 2
     dataset = remove_rows_contains_null(dataset, x)
     dataset = remove_rows_contains_null(dataset, y)
-    architecture = [('CNN', 512), ('LSTM', 512), ("FLATTEN", 0), ("DROPOUT", 0.2), ('DENSE', 1024)]
-    trainer = Trainer(dataset, x, y, label_type, architecture)
+    architecture = [('LSTM', 512), ("DROPOUT", 0.2), ('DENSE', 1024)]
+    trainer = Trainer(dataset, x, y, label_type, architecture, epochs=epochs, use_comet=True)
     trainer.train()
