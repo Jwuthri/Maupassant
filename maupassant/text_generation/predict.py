@@ -8,9 +8,8 @@ import tensorflow as tf
 import numpy as np
 
 from maupassant.settings import MODEL_PATH
-from maupassant.utils import ModelSaverLoader
 from maupassant.preprocessing.normalization import TextNormalization
-from maupassant.tensorflow_models_compile import BaseTensorflowModel
+from maupassant.tensorflow_models_compile import BaseTensorflowModel, ModelSaverLoader
 
 tf.compat.v1.disable_eager_execution()
 tf.compat.v1.disable_control_flow_v2()

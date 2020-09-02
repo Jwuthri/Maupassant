@@ -1,6 +1,6 @@
 from sklearn.preprocessing import MultiLabelBinarizer, LabelEncoder
 
-from maupassant.utils import ModelSaverLoader
+from maupassant.tensorflow_models_compile import ModelSaverLoader
 from maupassant.settings import MODEL_PATH
 
 

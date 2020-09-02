@@ -97,12 +97,12 @@ class BuildDataset(object):
         return dataset
 
     @timer
-    def generate(self, data):
+    def generate(self, data, test_size=0.1):
         cleaned_data = self.clean_dataset(data)
         text = " ".join(cleaned_data)
         self.set_tokenizer(text)
         labels = self.predictable_words()
-        train, val = train_test_split(cleaned_data, test_size=0.1, random_state=42)
+        train, val = train_test_split(cleaned_data, test_size=test_size, random_state=42)
         train_dataset = self.create_dataset(cleaned_data, labels, dataset_name="train")
         val_dataset = self.create_dataset(val, labels, dataset_name="validation")
 

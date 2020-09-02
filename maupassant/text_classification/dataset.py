@@ -63,14 +63,14 @@ class BuildDataset(LabelEncoding):
         return dataset
 
     @timer
-    def generate(self, data, x, y):
+    def generate(self, data, x, y, test_size=0.1):
         cleaned = self.clean_texts(data, x)
         if self.multi_label:
             cleaned = self.clean_labels(cleaned, y)
         else:
             cleaned['cleaned_labels'] = cleaned[y]
         X, y = cleaned["cleaned_texts"].values, cleaned["cleaned_labels"].values
-        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.1, random_state=42)
+        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=test_size, random_state=42)
 
         self.fit_encoder(y)
         y_train_encoded = self.transform_encoder(y_train)

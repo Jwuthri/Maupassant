@@ -1,9 +1,9 @@
 import tensorflow as tf
 
 from maupassant.settings import MODEL_PATH
-from maupassant.utils import ModelSaverLoader, predict_format, timer
+from maupassant.utils import predict_format, timer
 from maupassant.preprocessing.normalization import TextNormalization
-from maupassant.tensorflow_models_compile import BaseTensorflowModel
+from maupassant.tensorflow_models_compile import BaseTensorflowModel, ModelSaverLoader
 
 tf.compat.v1.disable_eager_execution()
 tf.compat.v1.disable_control_flow_v2()
@@ -22,10 +22,9 @@ class Predicter(BaseTensorflowModel):
         pretrained_embedding = info.get('pretrained_embedding')
         embedding_size = info.get('embedding_size')
         super().__init__(label_type, architecture, number_labels, pretrained_embedding, base_path, name, True)
-        self.model = self.build_model(0, embedding_size, 0)
+        self.build_model(0, embedding_size, 0)
         self.model = self.load_weights(self.model)
-        self.encoder = self.load_encoder()
-        self.classes = self.encoder.classes_
+        self.encoders = self.load_encoder()
         _ = self.predict(" ")
 
     def clean_text(self, text):
@@ -42,20 +41,27 @@ class Predicter(BaseTensorflowModel):
     def predict_probabilities(self, x):
         return self.model.predict(x)
 
-    def predict_classes(self, prediction, threshold):
-        results = [(self.classes[label], float(th)) for label, th in enumerate(prediction) if float(th) >= threshold]
+    @staticmethod
+    def predict_classes(prediction, threshold, encoder):
+        results = [(encoder.classes_[label], float(th)) for label, th in enumerate(prediction) if float(th) >= threshold]
 
         return dict(results)
 
     @timer
-    def predict(self, x, threshold=0.5):
-        x = self.clean_text(x)
+    def predict(self, x, threshold=0.5, clean=False):
+        if clean:
+            x = self.clean_text(x)
         probabilities = self.predict_probabilities(x=x)
-        classes = self.predict_classes(probabilities[0], threshold)
+        classes = []
+        for i in range(len(self.encoders)):
+            classes.append(self.predict_classes(probabilities[i], threshold, self.encoders[i]))
 
         return classes
 
 
 if __name__ == '__main__':
-    predicter = Predicter(MODEL_PATH, "2020_08_02_19_16_52_text_classification")
-    classes = predicter.predict("You are stupid")
+    predicter = Predicter(MODEL_PATH, "2020_09_01_16_40_23_text_classification")
+    pred = predicter.predict("You are fucking retard", threshold=0.5)
+    print(pred)
+    pred = predicter.predict("Je vous aime", threshold=0.5)
+    print(pred)
