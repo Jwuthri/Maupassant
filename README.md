@@ -260,6 +260,15 @@ trainer.train()
 ```
 * Find the most relevants sentences in a text
 ```
+
+###### Entities Recognition
+```
+* Find specific information from a text like:
+    addresses
+    email
+    phone number ... 
+```
+
 ###### Text Similarity
 ```
 * Cosine similarity between 2 documents

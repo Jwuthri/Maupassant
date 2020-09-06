@@ -1,20 +1,11 @@
 import os
 
 from comet_ml import Experiment
-import tensorflow as tf
 
 from maupassant.text_classification.dataset import BuildDataset
 from maupassant.tensorflow_metric_loss_optimizer import get_metrics
 from maupassant.tensorflow_models_compile import BaseTensorflowModel
 from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE, MODEL_PATH
-
-try:
-    tf.config.set_visible_devices([], "GPU")
-    visible_devices = tf.config.get_visible_devices()
-    for device in visible_devices:
-        assert device.device_type != "GPU"
-except:
-    pass
 
 
 class Trainer(BaseTensorflowModel):

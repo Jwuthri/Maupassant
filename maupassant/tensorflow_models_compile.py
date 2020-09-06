@@ -169,21 +169,26 @@ class BaseTensorflowModel(ModelSaverLoader):
                 layer = tf.keras.layers.LocallyConnected1D(
                     unit, kernel_size=3, strides=1, padding='valid', activation='relu')(layer)
             elif block == "BiLSTM":
-                layer = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(unit, activation="relu"))(layer)
+                layer = tf.keras.layers.Bidirectional(
+                    tf.keras.layers.LSTM(unit, activation="relu", return_sequences=False))(layer)
             elif block == "BiGRU":
-                layer = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(unit, activation="relu"))(layer)
+                layer = tf.keras.layers.Bidirectional(
+                    tf.keras.layers.GRU(unit, activation="relu", return_sequences=False))(layer)
             elif block == "BiRNN":
-                layer = tf.keras.layers.Bidirectional(tf.keras.layers.SimpleRNN(unit, activation="relu"))(layer)
+                layer = tf.keras.layers.Bidirectional(
+                    tf.keras.layers.SimpleRNN(unit, activation="relu", return_sequences=False))(layer)
             elif block == "CudaLSTM":
-                layer = tf.compat.v1.keras.layers.CuDNNLSTM(unit)(layer)
+                layer = tf.compat.v1.keras.layers.CuDNNLSTM(unit, return_sequences=False)(layer)
             elif block == "LSTM":
-                layer = tf.keras.layers.LSTM(unit, activation='relu')(layer)
+                layer = tf.keras.layers.LSTM(unit, activation='relu', return_sequences=False)(layer)
             elif block == "GRU":
-                layer = tf.keras.layers.GRU(unit, activation='relu')(layer)
+                layer = tf.keras.layers.GRU(unit, activation='relu', return_sequences=False)(layer)
             elif block == "RNN":
-                layer = tf.keras.layers.SimpleRNN(unit, activation='relu')(layer)
+                layer = tf.keras.layers.SimpleRNN(unit, activation='relu', return_sequences=False)(layer)
             elif block == "DENSE":
                 layer = tf.keras.layers.Dense(unit, activation="relu")(layer)
+            elif block == "TIME_DISTRIB_DENSE":
+                layer = tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(unit, activation="relu"))(layer)
             elif block == "FLATTEN":
                 layer = tf.keras.layers.Flatten()(layer)
             elif block == "DROPOUT":
@@ -234,24 +239,24 @@ class BaseTensorflowModel(ModelSaverLoader):
         return self.model.fit(x, y, epochs=epochs, validation_data=(x_val, y_val), callbacks=callbacks)
 
 
-class MergeModels(BaseTensorflowModel):
-
-    def __init__(self, model1_path, model2_path, base_path, name, model_load):
-        super().__init__("multi-class", architecture, self.number_labels, False, base_path, name, False)
-        self.model1_path = model1_path
-        self.model2_path = model2_path
-
-    def merge(self, model1_layer_start=3, model2_layer_start=3, model1_layer_end=None, model2_layer_end=None):
-        input_layer = tf.keras.Input((), dtype=tf.string, name="input_layer")
-        layer_input = PretrainedEmbedding(name="embedding_layer").model(input_layer)
-        layer_input = tf.keras.layers.Reshape(target_shape=(1, 512))(layer_input)
-        lst = [(self.model1, model1_layer_start, model1_layer_end), (self.model2, model2_layer_start, model2_layer_end)]
-        outputs = []
-        for model, start_layer, end_layer in lst:
-            layer = model.layers()[start_layer](layer_input)
-            for block in model.layers()[model1_layer_start + 1:end_layer]:
-                layer = block(layer)
-            outputs.append(layer)
-        merged_model = tf.keras.models.Model(inputs=input_layer, outputs=outputs)
-
-        return merged_model
+# class MergeModels(BaseTensorflowModel):
+#
+#     def __init__(self, model1_path, model2_path, base_path, name, model_load):
+#         super().__init__("multi-class", architecture, self.number_labels, False, base_path, name, False)
+#         self.model1_path = model1_path
+#         self.model2_path = model2_path
+#
+#     def merge(self, model1_layer_start=3, model2_layer_start=3, model1_layer_end=None, model2_layer_end=None):
+#         input_layer = tf.keras.Input((), dtype=tf.string, name="input_layer")
+#         layer_input = PretrainedEmbedding(name="embedding_layer").model(input_layer)
+#         layer_input = tf.keras.layers.Reshape(target_shape=(1, 512))(layer_input)
+#         lst = [(self.model1, model1_layer_start, model1_layer_end), (self.model2, model2_layer_start, model2_layer_end)]
+#         outputs = []
+#         for model, start_layer, end_layer in lst:
+#             layer = model.layers()[start_layer](layer_input)
+#             for block in model.layers()[model1_layer_start + 1:end_layer]:
+#                 layer = block(layer)
+#             outputs.append(layer)
+#         merged_model = tf.keras.models.Model(inputs=input_layer, outputs=outputs)
+#
+#         return merged_model

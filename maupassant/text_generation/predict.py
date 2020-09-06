@@ -7,9 +7,20 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 import tensorflow as tf
 import numpy as np
 
-from maupassant.settings import MODEL_PATH
+from maupassant.settings import MODEL_PATH, USE_GPU
 from maupassant.preprocessing.normalization import TextNormalization
 from maupassant.tensorflow_models_compile import BaseTensorflowModel, ModelSaverLoader
+
+GPUS = tf.config.experimental.list_physical_devices("GPU")
+if GPUS:
+    try:
+        for gpu in GPUS:
+            if USE_GPU:
+                tf.config.experimental.set_memory_growth(gpu, True)
+            else:
+                assert gpu.device_type != "GPU"
+    except RuntimeError as e:
+        print(e)
 
 tf.compat.v1.disable_eager_execution()
 tf.compat.v1.disable_control_flow_v2()
