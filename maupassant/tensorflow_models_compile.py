@@ -124,6 +124,7 @@ class BaseTensorflowModel(ModelSaverLoader):
         self.architecture = architecture
         self.number_labels = number_labels
         self.pretrained_embedding = pretrained_embedding
+        self.return_sequences = not self.pretrained_embedding
         self.model = tf.keras.Sequential()
         self.model_info = {
             "architecture": architecture, "label_type": label_type,
@@ -173,35 +174,42 @@ class BaseTensorflowModel(ModelSaverLoader):
                     unit, kernel_size=1, strides=1, padding='valid', activation='relu')(layer)
             elif block == "BiLSTM":
                 layer = tf.keras.layers.Bidirectional(
-                    tf.keras.layers.LSTM(unit, activation="relu", return_sequences=False))(layer)
+                    tf.keras.layers.LSTM(unit, activation="relu", return_sequences=self.return_sequences))(layer)
             elif block == "BiGRU":
                 layer = tf.keras.layers.Bidirectional(
-                    tf.keras.layers.GRU(unit, activation="relu", return_sequences=False))(layer)
+                    tf.keras.layers.GRU(unit, activation="relu", return_sequences=self.return_sequences))(layer)
             elif block == "BiRNN":
                 layer = tf.keras.layers.Bidirectional(
-                    tf.keras.layers.SimpleRNN(unit, activation="relu", return_sequences=False))(layer)
+                    tf.keras.layers.SimpleRNN(unit, activation="relu", return_sequences=self.return_sequences))(layer)
             elif block == "CudaLSTM":
-                layer = tf.compat.v1.keras.layers.CuDNNLSTM(unit, return_sequences=False)(layer)
+                layer = tf.compat.v1.keras.layers.CuDNNLSTM(unit, return_sequences=self.return_sequences)(layer)
             elif block == "LSTM":
-                layer = tf.keras.layers.LSTM(unit, activation='relu', return_sequences=False)(layer)
+                layer = tf.keras.layers.LSTM(unit, activation='relu', return_sequences=self.return_sequences)(layer)
             elif block == "GRU":
-                layer = tf.keras.layers.GRU(unit, activation='relu', return_sequences=False)(layer)
+                layer = tf.keras.layers.GRU(unit, activation='relu', return_sequences=self.return_sequences)(layer)
             elif block == "RNN":
-                layer = tf.keras.layers.SimpleRNN(unit, activation='relu', return_sequences=False)(layer)
+                layer = tf.keras.layers.SimpleRNN(unit, activation='relu', return_sequences=self.return_sequences)(layer)
             elif block == "DENSE":
                 layer = tf.keras.layers.Dense(unit, activation="relu")(layer)
             elif block == "TIME_DISTRIB_DENSE":
                 layer = tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(unit, activation="relu"))(layer)
             elif block == "FLATTEN":
                 layer = tf.keras.layers.Flatten()(layer)
-            elif block == "DROPOUT":
-                layer = tf.keras.layers.Dropout(unit)(layer)
-            elif block == "GLOBAL_POOL":
-                layer = tf.keras.layers.GlobalMaxPooling1D()(layer)
-            elif block == "MAX_POOL":
-                layer = tf.keras.layers.MaxPool1D()(layer)
             elif block == "RESHAPE":
                 layer = tf.keras.layers.Reshape(target_shape=unit)(layer)
+            elif block == "DROPOUT":
+                layer = tf.keras.layers.Dropout(unit)(layer)
+            elif block == "SPATIAL_DROPOUT":
+                layer = tf.keras.layers.SpatialDropout1D(unit)(layer)
+            elif block == "GLOBAL_MAX_POOL":
+                layer = tf.keras.layers.GlobalMaxPooling1D()(layer)
+            elif block == "MAX_POOL":
+                layer = tf.keras.layers.MaxPool1D(pool_size=unit)(layer)
+            elif block == "GLOBAL_AVERAGE_POOL":
+                layer = tf.keras.layers.GlobalAveragePooling1D()(layer)
+            elif block == "AVERAGE_POOL":
+                layer = tf.keras.layers.AveragePooling1D(pool_size=unit)(layer)
+
         output_layer = self.get_output_layer()(layer)
         self.model = tf.keras.models.Model(inputs=input_layer, outputs=output_layer)
 
