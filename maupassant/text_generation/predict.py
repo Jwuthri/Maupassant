@@ -1,4 +1,5 @@
 import re
+import os
 import string
 import operator
 
@@ -10,6 +11,8 @@ import numpy as np
 from maupassant.settings import MODEL_PATH, USE_GPU
 from maupassant.preprocessing.normalization import TextNormalization
 from maupassant.tensorflow_models_compile import BaseTensorflowModel, ModelSaverLoader
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 GPUS = tf.config.experimental.list_physical_devices("GPU")
 if GPUS:

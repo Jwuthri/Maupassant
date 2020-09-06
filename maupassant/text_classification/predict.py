@@ -1,9 +1,13 @@
+import os
+
 import tensorflow as tf
 
 from maupassant.settings import MODEL_PATH, USE_GPU
 from maupassant.utils import predict_format, timer
 from maupassant.preprocessing.normalization import TextNormalization
 from maupassant.tensorflow_models_compile import BaseTensorflowModel, ModelSaverLoader
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 GPUS = tf.config.experimental.list_physical_devices("GPU")
 if GPUS:
@@ -15,7 +19,6 @@ if GPUS:
                 assert gpu.device_type != "GPU"
     except RuntimeError as e:
         print(e)
-
 
 tf.compat.v1.disable_eager_execution()
 tf.compat.v1.disable_control_flow_v2()

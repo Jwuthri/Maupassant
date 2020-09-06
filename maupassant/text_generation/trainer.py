@@ -1,15 +1,13 @@
 import os
 
 from comet_ml import Experiment
-import tensorflow as tf
 
 from maupassant.text_generation.dataset import BuildDataset
 from maupassant.tensorflow_metric_loss_optimizer import get_metrics
 from maupassant.tensorflow_models_compile import BaseTensorflowModel
 from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE, MODEL_PATH
 
-tf.compat.v1.disable_eager_execution()
-tf.compat.v1.disable_control_flow_v2()
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 
 class Trainer(BaseTensorflowModel):
