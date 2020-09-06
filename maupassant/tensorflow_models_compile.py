@@ -148,7 +148,7 @@ class BaseTensorflowModel(ModelSaverLoader):
 
         return input_layer, layer
 
-    def get_output_layer(self, name="output_layer"):
+    def get_output_layer(self, name="output_layer", layer_type="DENSE"):
         if self.label_type == "binary-class":
             output = tf.keras.layers.Dense(units=1, activation="sigmoid", name=name)
         elif self.label_type == "multi-label":
@@ -157,6 +157,9 @@ class BaseTensorflowModel(ModelSaverLoader):
             output = tf.keras.layers.Dense(units=self.number_labels, activation="softmax", name=name)
         else:
             raise(Exception("Please provide a 'label_type' in ['binary-class', 'multi-label', 'multi-class']"))
+
+        if layer_type != "DENSE":
+            output = tf.keras.layers.TimeDistributed(output)
 
         return output
 
