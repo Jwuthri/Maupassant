@@ -11,9 +11,6 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from maupassant.utils import timer
 from maupassant.preprocessing.normalization import TextNormalization
 
-tf.compat.v1.disable_eager_execution()
-tf.compat.v1.disable_control_flow_v2()
-
 
 class BuildDataset(object):
 

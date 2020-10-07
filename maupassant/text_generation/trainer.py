@@ -7,8 +7,6 @@ from maupassant.tensorflow_metric_loss_optimizer import get_metrics
 from maupassant.tensorflow_models_compile import BaseTensorflowModel
 from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE, MODEL_PATH
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-
 
 class Trainer(BaseTensorflowModel):
 

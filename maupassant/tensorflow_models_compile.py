@@ -1,5 +1,4 @@
 import os
-import glob
 import json
 import pickle
 import shutil
@@ -13,6 +12,9 @@ from maupassant.settings import MODEL_PATH
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
+# tf.compat.v1.disable_eager_execution()
+# tf.compat.v1.disable_control_flow_v2()
+
 
 class ModelSaverLoader(object):
 
@@ -22,6 +24,14 @@ class ModelSaverLoader(object):
         self.model_load = model_load
         self.date = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         self.paths = self.define_paths()
+
+    def use_gpu(self, use_gpu=False):
+        if use_gpu:
+            gpus = tf.config.experimental.list_physical_devices("GPU")
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+        else:
+            tf.config.set_visible_devices([], 'GPU')
 
     def define_paths(self):
         if self.model_load:
@@ -60,13 +70,9 @@ class ModelSaverLoader(object):
         print(f"Label Encoder has been exported here => {self.paths['label_encoder_path']}")
 
     def load_encoder(self):
-        encoders_paths = glob.glob(os.path.join(self.paths['path'], "label_encoder*"))
-        encoders = []
-        for encoder_path in encoders_paths:
-            encoder = pickle.load(open(encoder_path, "rb"))
-            encoders.append(encoder)
+        encoder = pickle.load(open(self.paths['label_encoder_path'], "rb"))
 
-        return encoders
+        return encoder
 
     def export_info(self, info):
         with open(self.paths['model_info_path'], 'w') as outfile:
@@ -124,7 +130,8 @@ class BaseTensorflowModel(ModelSaverLoader):
         self.architecture = architecture
         self.number_labels = number_labels
         self.pretrained_embedding = pretrained_embedding
-        self.return_sequences = not self.pretrained_embedding
+        # self.return_sequences = not self.pretrained_embedding
+        self.return_sequences = False
         self.model = tf.keras.Sequential()
         self.model_info = {
             "architecture": architecture, "label_type": label_type,
@@ -143,9 +150,9 @@ class BaseTensorflowModel(ModelSaverLoader):
         else:
             input_layer = tf.keras.Input((input_size), name=name)
             layer = tf.keras.layers.Embedding(vocab_size, embedding_size, name="embedding_layer")(input_layer)
-            self.model_info['input_size'] = input_size
-            self.model_info['vocab_size'] = vocab_size
             self.model_info['embedding_size'] = embedding_size
+        self.model_info['input_size'] = input_size
+        self.model_info['vocab_size'] = vocab_size
 
         return input_layer, layer
 
@@ -159,13 +166,14 @@ class BaseTensorflowModel(ModelSaverLoader):
         else:
             raise(Exception("Please provide a 'label_type' in ['binary-class', 'multi-label', 'multi-class']"))
 
-        if layer_type != "DENSE":
+        if layer_type == "TIME_DISTRIB_DENSE":
             output = tf.keras.layers.TimeDistributed(output)
 
         return output
 
     def build_model(self, input_size=None, embedding_size=None, vocab_size=None, embedding_layer=None):
         input_layer, layer = self.get_input_layer(input_size, embedding_size, vocab_size, embedding_layer)
+        block = "DENSE"
         for block, unit in self.architecture:
             if block == "CNN":
                 layer = tf.keras.layers.Conv1D(unit, kernel_size=1, strides=1, padding='same', activation='relu')(layer)
@@ -210,27 +218,27 @@ class BaseTensorflowModel(ModelSaverLoader):
             elif block == "AVERAGE_POOL":
                 layer = tf.keras.layers.AveragePooling1D(pool_size=unit)(layer)
 
-        output_layer = self.get_output_layer()(layer)
+        output_layer = self.get_output_layer(layer_type=block)(layer)
         self.model = tf.keras.models.Model(inputs=input_layer, outputs=output_layer)
 
     def compile_model(self):
         if self.label_type == "binary-class":
             self.model.compile(
-                optimizer="adam", loss="binary_crossentropy",
+                optimizer="rmsprop", loss="binary_crossentropy",
                 metrics=[f1_score, "binary_accuracy", "Recall", "Precision"])
         elif self.label_type == "multi-label":
             self.model.compile(
-                optimizer="adam", loss=f1_loss,
+                optimizer="nadam", loss=f1_loss,
                 metrics=[f1_score, "categorical_accuracy", "top_k_categorical_accuracy"])
         elif self.label_type == "multi-class":
             self.model.compile(
-                optimizer="adam", loss="sparse_categorical_crossentropy",
+                optimizer="nadam", loss="sparse_categorical_crossentropy",
                 metrics=[f1_score, "sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy"])
         else:
             raise(Exception("Please provide a 'label_type' in ['binary-class', 'multi-label', 'multi-class']"))
 
     @staticmethod
-    def callback_func(checkpoint_path: str, tensorboard_dir: str=None):
+    def callback_func(checkpoint_path, tensorboard_dir=None):
         checkpoint = tf.keras.callbacks.ModelCheckpoint(
             filepath=checkpoint_path, verbose=1, period=1, save_weights_only=True)
         if tensorboard_dir:
@@ -248,26 +256,3 @@ class BaseTensorflowModel(ModelSaverLoader):
         callbacks = [] if not callbacks else callbacks
 
         return self.model.fit(x, y, epochs=epochs, validation_data=(x_val, y_val), callbacks=callbacks)
-
-
-# class MergeModels(BaseTensorflowModel):
-#
-#     def __init__(self, model1_path, model2_path, base_path, name, model_load):
-#         super().__init__("multi-class", architecture, self.number_labels, False, base_path, name, False)
-#         self.model1_path = model1_path
-#         self.model2_path = model2_path
-#
-#     def merge(self, model1_layer_start=3, model2_layer_start=3, model1_layer_end=None, model2_layer_end=None):
-#         input_layer = tf.keras.Input((), dtype=tf.string, name="input_layer")
-#         layer_input = PretrainedEmbedding(name="embedding_layer").model(input_layer)
-#         layer_input = tf.keras.layers.Reshape(target_shape=(1, 512))(layer_input)
-#         lst = [(self.model1, model1_layer_start, model1_layer_end), (self.model2, model2_layer_start, model2_layer_end)]
-#         outputs = []
-#         for model, start_layer, end_layer in lst:
-#             layer = model.layers()[start_layer](layer_input)
-#             for block in model.layers()[model1_layer_start + 1:end_layer]:
-#                 layer = block(layer)
-#             outputs.append(layer)
-#         merged_model = tf.keras.models.Model(inputs=input_layer, outputs=outputs)
-#
-#         return merged_model

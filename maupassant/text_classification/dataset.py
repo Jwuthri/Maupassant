@@ -13,7 +13,7 @@ from maupassant.preprocessing.normalization import TextNormalization
 
 class BuildDataset(LabelEncoding):
 
-    def __init__(self, label_type="single_label", batch_size=512, buffer_size=512):
+    def __init__(self, label_type="single_label", batch_size=128, buffer_size=128):
         multi_label = True if label_type == "multi-label" else False
         super().__init__(multi_label, base_path=MODEL_PATH, model_load=False)
         self.label_type = label_type
@@ -71,7 +71,8 @@ class BuildDataset(LabelEncoding):
             cleaned['cleaned_labels'] = cleaned[y]
         X, y = cleaned["cleaned_texts"].values, cleaned["cleaned_labels"].values
         X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=test_size, random_state=42)
-
+        print(X.head())
+        print(y.head())
         self.fit_encoder(y)
         y_train_encoded = self.transform_encoder(y_train)
         y_val_encoded = self.transform_encoder(y_val)

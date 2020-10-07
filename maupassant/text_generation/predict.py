@@ -1,37 +1,20 @@
 import re
-import os
 import string
 import operator
 
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-
-import tensorflow as tf
 import numpy as np
 
-from maupassant.settings import MODEL_PATH, USE_GPU
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+from maupassant.utils import not_none, timer
+from maupassant.settings import MODEL_PATH
 from maupassant.preprocessing.normalization import TextNormalization
 from maupassant.tensorflow_models_compile import BaseTensorflowModel, ModelSaverLoader
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
-GPUS = tf.config.experimental.list_physical_devices("GPU")
-if GPUS:
-    try:
-        for gpu in GPUS:
-            if USE_GPU:
-                tf.config.experimental.set_memory_growth(gpu, True)
-            else:
-                assert gpu.device_type != "GPU"
-    except RuntimeError as e:
-        print(e)
+class Predictor(BaseTensorflowModel):
 
-tf.compat.v1.disable_eager_execution()
-tf.compat.v1.disable_control_flow_v2()
-
-
-class Predicter(BaseTensorflowModel):
-
-    def __init__(self, base_path=MODEL_PATH, name='model_name', max_words=20000, cleaning_func=None):
+    def __init__(self, base_path=MODEL_PATH, name='model_name', max_words=20000, cleaning_func=None, gpu=False):
         self.normalizer = TextNormalization()
         self.cleaning_func = cleaning_func
         msl = ModelSaverLoader(base_path, name, True)
@@ -43,8 +26,9 @@ class Predicter(BaseTensorflowModel):
         input_size = info.get('input_size', 0)
         vocab_size = info.get('vocab_size', 0)
         embedding_size = info.get('embedding_size')
-        super().__init__(label_type, architecture, number_labels, pretrained_embedding, base_path, "text_generation", False)
-        self.model = self.build_model(input_size, embedding_size, vocab_size)
+        super().__init__(label_type, architecture, number_labels, pretrained_embedding, base_path, name, True)
+        self.use_gpu(gpu)
+        self.build_model(input_size, embedding_size, vocab_size)
         self.model = self.load_weights(self.model)
         self.tokenizer = self.load_tokenizer()
         self.input_size = input_size
@@ -57,7 +41,7 @@ class Predicter(BaseTensorflowModel):
             "!", "@", "#", "$", "%", "^", "&", "\\(", "\\)", "_", "-", ",", "<", "\\.",
             ">", "\\?", "`", "~", ":", ";", "\\+", "=", "[", "]", "{", "}", "\n{2,}", "\\s"
         ])
-        _ = self.predict(" ")
+        _ = self.predict("")
 
     def split_text(self, text):
         text = text.lower()
@@ -84,7 +68,7 @@ class Predicter(BaseTensorflowModel):
         return padded_tokenized_text
 
     def split_text_last_word(self, text):
-        return text.split(self.splitter)[-1], text.split(self.splitter)[:-1]
+        return text.split(self.splitter)[-1], "".join(text.split(self.splitter)[:-1])
 
     def get_prediction_startwith(self, predictions, word, threshold=0.3):
         tokens_ids = np.where(predictions[0] >= threshold)[0]
@@ -148,27 +132,34 @@ class Predicter(BaseTensorflowModel):
 
         return text, scores, tokens
 
+    @not_none
     def generate(self, x, max_predictions=100):
         text = x
         text, _, _ = self.word_completion(text)
         text, _, _ = self.next_words(text, threshold=0.0, max_predictions=max_predictions)
-        predicted_text = text[len(x) :]
+        predicted_text = text[len(x):]
 
-        return predicted_text
+        return {"input_text": x, "predicted_text": predicted_text}
 
+    # @timer
+    @not_none
     def predict(self, x, completion_threshold=0.2, prediction_threshold=0.3, max_predictions=5):
         text = x
         text, completion_score, completion_token = self.word_completion(text, threshold=completion_threshold)
         text, next_word_scores, next_word_tokens = self.next_words(
             text, threshold=prediction_threshold, max_predictions=max_predictions)
-        predicted_text = text[len(x) :]
+        predicted_text = text[len(x):]
         scores = completion_score + next_word_scores
         tokens = completion_token + next_word_tokens
 
-        return predicted_text, scores, tokens
+        return {"input_text": x, "predicted_text": predicted_text, "scores": scores, "tokens": tokens}
 
 
 if __name__ == '__main__':
-    predicter = Predicter(MODEL_PATH, "2020_08_02_19_16_52_text_generation")
-    predicter.predict("Bonjour, je voulais", max_predictions=3)
-    predicter.generate("Bonjour, je voulais", max_predictions=100)
+    predictor = Predictor(MODEL_PATH, "2020_09_01_16_11_13_text_generation")
+    pred = predictor.predict("Bonjour, je voulais", max_predictions=3)
+    print(pred)
+    pred = predictor.generate("Bonjour, je voulais", max_predictions=10)
+    print(pred)
+    pred = predictor.generate("", max_predictions=10)
+    print(pred)
