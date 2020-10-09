@@ -16,12 +16,19 @@ class TensorflowModel(TensorflowLoaderSaver):
         self.embedding_size = kwargs.get('embedding_size', 256)
         self.vocab_size = kwargs.get('vocab_size', 200000)
         self.pretrained_embedding = kwargs.get('pretrained_embedding', True)
+        self.model = tf.keras.Sequential()
         super().__init__(name, False, **kwargs)
         exception_message = f"label_type should be in ['binary-class', 'multi-label', 'multi-class'] not {label_type}"
         assert label_type in ['binary-class', 'multi-label', 'multi-class'], exception_message
 
     def build_model(self):
         input_layer, layer = get_input_layer(self.pretrained_embedding, self.embedding_size, self.input_size, self.vocab_size)
+        self.model_info['input_size'] = self.input_size
+        self.model_info['vocab_size'] = self.vocab_size
+        self.model_info['embedding_size'] = self.embedding_size
+        self.model_info['pretrained_embedding'] = self.pretrained_embedding
+        self.model_info['architecture'] = self.architecture
+        self.model_info['label_type'] = self.label_type
         block = None
         for block, unit in self.architecture:
             layer = text_to_layer(block, unit)(layer)
@@ -40,10 +47,8 @@ class TensorflowModel(TensorflowLoaderSaver):
                 optimizer="adam",
                 loss=f1_loss,
                 metrics=[f1_score, "categorical_accuracy", "top_k_categorical_accuracy"])
-        elif self.label_type == "multi-class":
+        else:
             self.model.compile(
                 optimizer="nadam",
                 loss="categorical_crossentropy",
                 metrics=[f1_score, "categorical_accuracy", "top_k_categorical_accuracy"])
-        else:
-            raise (Exception("Please provide a 'label_type' in ['binary-class', 'multi-label', 'multi-class']"))

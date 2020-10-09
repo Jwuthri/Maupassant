@@ -15,11 +15,13 @@ class TensorflowLoaderSaver(object):
     def __init__(self, name, model_load, **kwargs):
         self.name = name
         self.model_load = model_load
+        self.model_info = dict()
         self.base_path = kwargs.get('base_path', MODEL_PATH)
         self.date = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         self.paths = self.define_paths()
 
-    def use_gpu(self, use_gpu=False):
+    @staticmethod
+    def use_gpu(use_gpu=False):
         if use_gpu:
             gpus = tf.config.experimental.list_physical_devices("GPU")
             for gpu in gpus:

@@ -15,20 +15,21 @@ def get_input_layer(use_pretrained, embedding_size, input_size, vocab_size):
 
     return input_layer, layer
 
+
 def get_output_layer(label_type, units=1, use_time_distrib=False):
     """Get the output layer, with the activation function based on the label_type."""
     if label_type == "binary-class":
         output = tf.keras.layers.Dense(units=1, activation="sigmoid")
     elif label_type == "multi-label":
         output = tf.keras.layers.Dense(units=units, activation="sigmoid")
-    elif label_type == "multi-class":
-        output = tf.keras.layers.Dense(units=units, activation="softmax")
     else:
-        raise (Exception("Please provide a 'label_type' in ['binary-class', 'multi-label', 'multi-class']"))
+        output = tf.keras.layers.Dense(units=units, activation="softmax")
+
     if use_time_distrib:
         output = tf.keras.layers.TimeDistributed(output)
 
     return output
+
 
 def text_to_layer(block, unit, return_sequences=False):
     """Build tensorflow layer, easily."""

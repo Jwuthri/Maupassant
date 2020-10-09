@@ -30,3 +30,13 @@ def hamming_score(y_true, y_pred):
         acc_list.append(tmp_a)
 
     return np.mean(acc_list)
+
+
+def get_metrics(history, metric='f1_score'):
+    """Extract the loss and metric from the model"""
+    train_loss = [float(x) for x in history.history["loss"]]
+    val_loss = [float(x) for x in history.history["val_loss"]]
+    train_metric = [float(x) for x in history.history[metric]]
+    val_metric = [float(x) for x in history.history[f"val_{metric}"]]
+
+    return {"train_loss": train_loss, "val_loss": val_loss, "train_metric": train_metric, "val_metric": val_metric}

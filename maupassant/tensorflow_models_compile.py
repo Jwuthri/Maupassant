@@ -232,8 +232,8 @@ class BaseTensorflowModel(ModelSaverLoader):
                 metrics=[f1_score, "categorical_accuracy", "top_k_categorical_accuracy"])
         elif self.label_type == "multi-class":
             self.model.compile(
-                optimizer="nadam", loss="sparse_categorical_crossentropy",
-                metrics=[f1_score, "sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy"])
+                optimizer="nadam", loss="categorical_crossentropy",
+                metrics=[f1_score, "categorical_accuracy", "top_k_categorical_accuracy"])
         else:
             raise(Exception("Please provide a 'label_type' in ['binary-class', 'multi-label', 'multi-class']"))
 
