@@ -36,7 +36,7 @@ def timer(func):
     return wrapper
 
 
-def logger(path):
+def path_logger(path):
 
     def real_logger(func):
 

@@ -6,14 +6,16 @@ import datetime
 
 import tensorflow as tf
 
+from maupassant.settings import MODEL_PATH
+
 
 class TensorflowLoaderSaver(object):
-    """Module to save or load a model saved through this module."""
+    """Module to save or load a model saved."""
 
-    def __init__(self, base_path, name, model_load):
-        self.base_path = base_path
+    def __init__(self, name, model_load, **kwargs):
         self.name = name
         self.model_load = model_load
+        self.base_path = kwargs.get('base_path', MODEL_PATH)
         self.date = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         self.paths = self.define_paths()
 

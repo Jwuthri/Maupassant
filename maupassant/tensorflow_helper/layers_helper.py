@@ -1,5 +1,34 @@
 import tensorflow as tf
 
+from maupassant.feature_extraction.pretrained_embedding import PretrainedEmbedding
+
+
+def get_input_layer(use_pretrained, embedding_size, input_size, vocab_size):
+    """Create the input layer, with embedding."""
+    if use_pretrained:
+        input_layer = tf.keras.Input((), dtype=tf.string)
+        layer = PretrainedEmbedding().model(input_layer)
+        layer = tf.keras.layers.Reshape(target_shape=(1, 512))(layer)
+    else:
+        input_layer = tf.keras.Input((input_size))
+        layer = tf.keras.layers.Embedding(vocab_size, embedding_size)(input_layer)
+
+    return input_layer, layer
+
+def get_output_layer(label_type, units=1, use_time_distrib=False):
+    """Get the output layer, with the activation function based on the label_type."""
+    if label_type == "binary-class":
+        output = tf.keras.layers.Dense(units=1, activation="sigmoid")
+    elif label_type == "multi-label":
+        output = tf.keras.layers.Dense(units=units, activation="sigmoid")
+    elif label_type == "multi-class":
+        output = tf.keras.layers.Dense(units=units, activation="softmax")
+    else:
+        raise (Exception("Please provide a 'label_type' in ['binary-class', 'multi-label', 'multi-class']"))
+    if use_time_distrib:
+        output = tf.keras.layers.TimeDistributed(output)
+
+    return output
 
 def text_to_layer(block, unit, return_sequences=False):
     """Build tensorflow layer, easily."""
@@ -44,4 +73,3 @@ def text_to_layer(block, unit, return_sequences=False):
         layer = tf.keras.layers.AveragePooling1D(pool_size=unit)
 
     return layer
-
