@@ -55,12 +55,7 @@ class Predictor(BaseTensorflowModel):
 
 
 if __name__ == '__main__':
-    # predictor = Predictor(MODEL_PATH, "2020_09_30_12_25_35_text_classification")
-    # predictor = Predictor(MODEL_PATH, "2020_09_30_14_07_42_text_classification")
-    # predictor = Predictor(MODEL_PATH, "2020_09_30_14_56_14_text_classification")
-    predictor = Predictor(MODEL_PATH, "2020_09_30_20_35_10_intent")
-    # predictor = Predictor(MODEL_PATH, "2020_09_30_16_49_55_sentiment")
-
+    predictor = Predictor(MODEL_PATH, "2020_10_09_11_36_50_sentiment")
 
     t = [
         "My order is damaged, I want a refund",

@@ -29,12 +29,13 @@ class TensorflowModel(TensorflowLoaderSaver):
         self.model_info['pretrained_embedding'] = self.pretrained_embedding
         self.model_info['architecture'] = self.architecture
         self.model_info['label_type'] = self.label_type
+        self.model_info['label_encoder_classes_number'] = self.label_encoder_classes_number
         block = None
         for block, unit in self.architecture:
             layer = text_to_layer(block, unit)(layer)
         use_time_distrib = True if block == "TIME_DISTRIB_DENSE" else False
         output_layer = get_output_layer(self.label_type, units=1, use_time_distrib=use_time_distrib)(layer)
-        self.model = tf.keras.Model(input_layer=input_layer, output_layer=output_layer)
+        self.model = tf.keras.Model(inputs=input_layer, outputs=output_layer)
 
     def compile_model(self):
         if self.label_type == "binary-class":
@@ -50,5 +51,5 @@ class TensorflowModel(TensorflowLoaderSaver):
         else:
             self.model.compile(
                 optimizer="nadam",
-                loss="categorical_crossentropy",
-                metrics=[f1_score, "categorical_accuracy", "top_k_categorical_accuracy"])
+                loss="sparse_categorical_crossentropy",
+                metrics=[f1_score, "sparse_categorical_accuracy", "sparse_top_k_categorical_accuracy"])

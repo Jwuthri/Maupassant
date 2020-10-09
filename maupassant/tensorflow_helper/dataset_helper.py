@@ -67,7 +67,7 @@ class TensorflowDataset(TensorflowModel):
         return cleaned_labels
 
     def to_tensorflow_dataset(self, x, y, dataset_name="train", is_training=True):
-        pbar = tqdm(totall=1, desc=f"Generating dataset {dataset_name}")
+        pbar = tqdm(total=1, desc=f"Generating dataset {dataset_name}")
         dataset = tf.data.Dataset.from_tensor_slices((x, y))
         if is_training:
             dataset = dataset.cache()
