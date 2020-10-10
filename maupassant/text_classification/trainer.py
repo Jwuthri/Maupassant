@@ -86,13 +86,23 @@ if __name__ == '__main__':
     from maupassant.settings import DATASET_PATH
     from maupassant.dataset.pandas import remove_rows_contains_null
 
-    dataset_path = os.path.join(DATASET_PATH, "intent_renamed.csv")
-
-    dataset = pd.read_csv(dataset_path)
+    # dataset_path = os.path.join(DATASET_PATH, "intent_renamed.csv")
+    dataset_path = os.path.join(DATASET_PATH, "intent.csv")
+    dataset = pd.read_csv(dataset_path, nrows=20000)
     # ['binary-class', 'multi-label', 'multi-class']
+    projects = {
+        "intent": "intent-classifier",
+        "sentiment": "sentiment-classifier",
+        "summarization": "text-summarizer",
+        "macro": "macro-suggestion-stacker",
+        "phrase": "phrase-prediction",
+    }
+    api_key = "EJGg4eN8erTkn5o2OHAZyN7RY"
+    project_name = projects.get("intent", "gorgias-ml")
+    workspace = "gorgias"
     x, y, label_type, epochs = "x", "y", "multi-label", 10
     dataset = remove_rows_contains_null(dataset, x)
     dataset = remove_rows_contains_null(dataset, y)
     architecture = [('LCNN', 512), ("GLOBAL_AVERAGE_POOL", 0), ("FLATTEN", 0), ("DROPOUT", 0.1), ('DENSE', 256)]
-    trainer = Trainer(dataset, x, y, label_type, architecture, epochs=epochs, use_comet=True, name='intent', batch_size=32, buffer_size=32)
+    trainer = Trainer(dataset, x, y, label_type, architecture, epochs=epochs, use_comet=True, name='intent', api_key=api_key, project_name=project_name, workspace=workspace, batch_size=32, buffer_size=32)
     trainer.train()

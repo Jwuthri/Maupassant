@@ -7,10 +7,10 @@ from maupassant.tensorflow_helper.trainer_helper import TensorflowTrainer
 
 
 if __name__ == '__main__':
-    dataset_path = os.path.join(DATASET_PATH, "sentiment_imdb.csv")
+    dataset_path = os.path.join(DATASET_PATH, "intent.csv")
     architecture = [('LCNN', 512), ("GLOBAL_AVERAGE_POOL", 0), ("DROPOUT", 0.1), ('DENSE', 256)]
-    dataset = pd.read_csv(dataset_path, nrows=20000)
-    x_col, y_col, label_type, epochs, name = "feature", "sentiment", "multi-class", 1, "sentiment"
+    dataset = pd.read_csv(dataset_path)
+    x_col, y_col, label_type, epochs, name = "x", "y", "multi-label", 5, "sentiment"
 
     projects = {
         "intent": "intent-classifier",

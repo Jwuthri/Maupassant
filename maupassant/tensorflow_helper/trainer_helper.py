@@ -12,9 +12,6 @@ class TensorflowTrainer(TensorflowDataset):
     """Module to train model."""
 
     def __init__(self, label_type, name, architecture, **kwargs):
-        self.pretrained_embedding = kwargs.get('pretrained_embedding', True)
-        self.embedding_size = kwargs.get('embedding_size', 256)
-        self.input_size = kwargs.get('input_size', 128)
         self.epochs = kwargs.get('epochs', 10)
         self.use_comet = kwargs.get('use_comet', True)
         self.do_zip_model = kwargs.get('do_zip_model', True)

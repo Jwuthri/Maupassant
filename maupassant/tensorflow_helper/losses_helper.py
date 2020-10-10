@@ -1,15 +1,25 @@
 import tensorflow as tf
+from tensorflow.python.ops import nn, math_ops
+from tensorflow.python.framework import smart_cond, ops
+from tensorflow.python.ops import array_ops
+
 import tensorflow.keras.backend as K
 
 e = K.epsilon()
 
 
 @tf.function
-def f1_loss(y, y_hat):
+def f1_loss(y, y_hat, label_smoothing=0.1):
     """Compute the macro soft F1-score as a cost (average 1 - soft-F1 across all labels)."""
     y_hat = tf.cast(y_hat, tf.float32)
     y = tf.cast(y, tf.float32)
+    label_smoothing = ops.convert_to_tensor_v2(label_smoothing, dtype=K.floatx())
 
+    def _smooth_labels():
+        num_classes = math_ops.cast(array_ops.shape(y)[-1], y_hat.dtype)
+        return y * (1.0 - label_smoothing) + (label_smoothing / num_classes)
+
+    y = smart_cond.smart_cond(label_smoothing, _smooth_labels, lambda: y)
     tp = tf.reduce_sum(y_hat * y, axis=0)
     fp = tf.reduce_sum(y_hat * (1 - y), axis=0)
     fn = tf.reduce_sum((1 - y_hat) * y, axis=0)
@@ -37,43 +47,6 @@ def iou_loss(y, y_hat):
 
 
 @tf.function
-def focal_loss(y, y_hat, alpha=0.8, gamma=2):
-    """Focal Loss was introduced by Lin et al of Facebook AI Research in 2017 as a means of combatting extremely
-    imbalanced datasets where positive cases were relatively rare:
-    https://arxiv.org/abs/1708.02002"""
-    y_hat = K.flatten(y_hat)
-    y = K.flatten(y)
-
-    bce = K.binary_crossentropy(y, y_hat)
-    bce_exp = K.exp(-bce)
-    focal = K.mean(alpha * K.pow((1 - bce_exp), gamma) * bce)
-
-    return focal
-
-
-@tf.function
-def focal_loss_fixed(y_true, y_pred, gamma=2, alpha=0.4):
-    """Focal loss for multi-classification
-    FL(p_t)=-alpha(1-p_t)^{gamma}ln(p_t)
-    Notice: y_pred is probability after softmax
-    gradient is d(Fl)/d(p_t) not d(Fl)/d(x) as described in paper
-    d(Fl)/d(p_t) * [p_t(1-p_t)] = d(Fl)/d(x)
-    Focal Loss for Dense Object Detection
-    https://arxiv.org/abs/1708.02002
-    """
-    y_true = tf.convert_to_tensor(y_true, tf.float32)
-    y_pred = tf.convert_to_tensor(y_pred, tf.float32)
-
-    model_out = tf.add(y_pred, e)
-    ce = tf.multiply(y_true, -tf.math.log(model_out))
-    weight = tf.multiply(y_true, tf.pow(tf.subtract(1., model_out), gamma))
-    fl = tf.multiply(alpha, tf.multiply(weight, ce))
-    reduced_fl = tf.reduce_max(fl, axis=1)
-
-    return tf.reduce_mean(reduced_fl)
-
-
-@tf.function
 def combo_loss(y, y_hat, alpha=0.5, ce_ratio=0.5, smooth=1):
     """Combo loss is a combination of Dice Loss and a modified Cross-Entropy function that, like Tversky loss, has
     additional constants which penalise either false positives or false negatives more respectively:
@@ -89,3 +62,26 @@ def combo_loss(y, y_hat, alpha=0.5, ce_ratio=0.5, smooth=1):
     combo = (ce_ratio * weighted_ce) - ((1 - ce_ratio) * dice)
 
     return combo
+
+
+@tf.function
+def cosine_similarity(y_true, y_pred, axis=-1):
+    """Computes the cosine similarity between labels and predictions."""
+    y_true = nn.l2_normalize(y_true, axis=axis)
+    y_pred = nn.l2_normalize(y_pred, axis=axis)
+
+    return -math_ops.reduce_sum(y_true * y_pred, axis=axis)
+
+
+@tf.function
+def focal_loss(y_true, y_pred, gamma=2.0, alpha=1.0):
+    epsilon = K.epsilon()
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
+    model_out = tf.add(y_pred, epsilon)
+    ce = tf.multiply(y_true, -tf.math.log(model_out))
+    weight = tf.multiply(y_true, tf.pow(tf.subtract(1., model_out), gamma))
+    fl = tf.multiply(alpha, tf.multiply(weight, ce))
+    reduced_fl = tf.reduce_max(fl, axis=1)
+
+    return tf.reduce_mean(reduced_fl)

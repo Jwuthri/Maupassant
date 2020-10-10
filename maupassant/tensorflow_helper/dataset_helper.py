@@ -28,7 +28,7 @@ class TensorflowDataset(TensorflowModel):
         if label_type == "multi-label":
             return MultiLabelBinarizer()
         else:
-            return LabelEncoder()
+            return MultiLabelBinarizer()
 
     def fit_encoder(self, y):
         self.label_encoder.fit(y)
@@ -85,7 +85,7 @@ class TensorflowDataset(TensorflowModel):
         data = data[data[x_column].notnull()]
         data = data[data[y_column].notnull()]
         x = self.clean_x(data[x_column])
-        y = self.clean_y(data[y_column]) if self.label_type == "multi-label" else data[y_column]
+        y = self.clean_y(data[y_column]) if self.label_type != "binary-class" else data[y_column]
         self.fit_encoder(y)
         x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=self.test_size, random_state=42)
         y_train_encoded = self.label_encoder.transform(y_train)
