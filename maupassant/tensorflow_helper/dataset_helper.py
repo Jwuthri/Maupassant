@@ -1,10 +1,11 @@
 import ast
 
 from tqdm import tqdm
+import plotly.express as px
 
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MultiLabelBinarizer, LabelEncoder
+from sklearn.preprocessing import MultiLabelBinarizer, LabelBinarizer
 
 from maupassant.utils import timer
 from maupassant.preprocessing.normalization import TextNormalization
@@ -28,7 +29,7 @@ class TensorflowDataset(TensorflowModel):
         if label_type == "multi-label":
             return MultiLabelBinarizer()
         else:
-            return MultiLabelBinarizer()
+            return LabelBinarizer()
 
     def fit_encoder(self, y):
         self.label_encoder.fit(y)
@@ -80,12 +81,18 @@ class TensorflowDataset(TensorflowModel):
 
         return dataset
 
+    @staticmethod
+    def plot_classes_distribution(data, column):
+        fig = px.histogram(data, x=column)
+        fig.show()
+
     @timer
     def generate_dataset(self, data, x_column, y_column):
         data = data[data[x_column].notnull()]
         data = data[data[y_column].notnull()]
+        self.plot_classes_distribution(data, y_column)
         x = self.clean_x(data[x_column])
-        y = self.clean_y(data[y_column]) if self.label_type != "binary-class" else data[y_column]
+        y = self.clean_y(data[y_column]) if self.label_type == "multi-label" else data[y_column]
         self.fit_encoder(y)
         x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=self.test_size, random_state=42)
         y_train_encoded = self.label_encoder.transform(y_train)

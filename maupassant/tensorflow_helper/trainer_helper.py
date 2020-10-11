@@ -1,5 +1,6 @@
 import os
 
+import colorful as cf
 from comet_ml import Experiment
 
 from maupassant.settings import API_KEY, PROJECT_NAME, WORKSPACE
@@ -46,7 +47,7 @@ class TensorflowTrainer(TensorflowDataset):
             tensorboard_callback(self.paths['tensorboard_path']),
             checkpoint_callback(self.paths['checkpoint_path'])
         ]
-        print(f"tensorboard --logdir {self.paths['tensorboard_path']}")
+        print(f"{cf.bold_magenta}tensorboard --logdir {self.paths['tensorboard_path']}{cf.reset}")
         hist = self.fit_dataset(train_dataset, val_dataset, callbacks)
 
         return hist

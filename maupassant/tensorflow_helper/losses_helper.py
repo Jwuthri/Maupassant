@@ -5,8 +5,6 @@ from tensorflow.python.ops import array_ops
 
 import tensorflow.keras.backend as K
 
-e = K.epsilon()
-
 
 @tf.function
 def f1_loss(y, y_hat, label_smoothing=0.1):
@@ -23,7 +21,7 @@ def f1_loss(y, y_hat, label_smoothing=0.1):
     tp = tf.reduce_sum(y_hat * y, axis=0)
     fp = tf.reduce_sum(y_hat * (1 - y), axis=0)
     fn = tf.reduce_sum((1 - y_hat) * y, axis=0)
-    soft_f1 = 2 * tp / (2 * tp + fn + fp + e)
+    soft_f1 = 2 * tp / (2 * tp + fn + fp + K.epsilon())
     cost = 1 - soft_f1
     macro_cost = tf.reduce_mean(cost)
 
@@ -41,7 +39,7 @@ def iou_loss(y, y_hat):
     intersection = K.sum(K.dot(y, y_hat))
     total = K.sum(y) + K.sum(y_hat)
     union = total - intersection
-    iou = (intersection + e) / (union + e)
+    iou = (intersection + K.epsilon()) / (union + K.epsilon())
 
     return 1 - iou
 
@@ -56,7 +54,7 @@ def combo_loss(y, y_hat, alpha=0.5, ce_ratio=0.5, smooth=1):
 
     intersection = K.sum(y * y_hat)
     dice = (2. * intersection + smooth) / (K.sum(y) + K.sum(y_hat) + smooth)
-    y_hat = K.clip(y_hat, e, 1.0 - e)
+    y_hat = K.clip(y_hat, K.epsilon(), 1.0 - K.epsilon())
     out = - (alpha * ((y * K.log(y_hat)) + ((1 - alpha) * (1.0 - y) * K.log(1.0 - y_hat))))
     weighted_ce = K.mean(out, axis=-1)
     combo = (ce_ratio * weighted_ce) - ((1 - ce_ratio) * dice)
@@ -75,10 +73,9 @@ def cosine_similarity(y_true, y_pred, axis=-1):
 
 @tf.function
 def focal_loss(y_true, y_pred, gamma=2.0, alpha=1.0):
-    epsilon = K.epsilon()
     y_true = tf.cast(y_true, tf.float32)
     y_pred = tf.cast(y_pred, tf.float32)
-    model_out = tf.add(y_pred, epsilon)
+    model_out = tf.add(y_pred, K.epsilon())
     ce = tf.multiply(y_true, -tf.math.log(model_out))
     weight = tf.multiply(y_true, tf.pow(tf.subtract(1., model_out), gamma))
     fl = tf.multiply(alpha, tf.multiply(weight, ce))
