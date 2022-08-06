@@ -21,7 +21,7 @@ setup(
         "pydot==1.4.1",
         "pytest==5.2.0",
         "scikit-learn==0.23.0",
-        "streamlit==0.65.0",
+        "streamlit==1.11.1",
         "umap-learn==0.3.10",
         "contractions==0.0.25",
         "python-dotenv==0.14.0"
